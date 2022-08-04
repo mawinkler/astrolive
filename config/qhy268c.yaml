@@ -1,0 +1,65 @@
+type: vertical-stack
+cards:
+  - color: rgb(51, 53, 58)
+    color_type: label-card
+    name: QHY 268c
+    styles:
+      card:
+        - height: 20px
+      name:
+        - font-weight: bold
+        - font-size: 14px
+        - color: white
+        - align-self: middle
+        - padding-bottom: 4px
+    type: custom:button-card
+  - show_state: false
+    show_name: false
+    camera_view: live
+    type: picture-entity
+    entity: camera.qhy_268c
+    camera_image: camera.qhy_268c
+  - square: false
+    columns: 2
+    type: grid
+    cards:
+      - type: custom:mushroom-entity-card
+        entity: sensor.qhy_268c_object_of_interest
+        name: Object
+        icon_type: none
+      - type: custom:mushroom-entity-card
+        entity: sensor.qhy_268c_image_type
+        name: Type
+        icon_type: none
+      - type: custom:mushroom-entity-card
+        entity: sensor.qhy_268c_time_of_observation
+        name: Time of Observation
+        icon_type: none
+      - type: custom:mushroom-entity-card
+        entity: sensor.qhy_268c_exposure_duration
+        name: Exposure Duration
+        icon_type: none
+      - type: custom:mushroom-entity-card
+        entity: sensor.qhy_268c_filter
+        name: Filter
+        icon_type: none
+      - type: custom:mushroom-entity-card
+        entity: sensor.qhy_268c_telescope
+        name: Telescope
+        icon_type: none
+      - type: custom:mushroom-entity-card
+        entity: sensor.qhy_268c_altitude_of_telescope
+        name: Altitude
+        icon_type: none
+      - type: custom:mushroom-entity-card
+        entity: sensor.qhy_268c_azimuth_of_telescope
+        name: Azimuth
+        icon_type: none
+      - type: custom:mushroom-entity-card
+        entity: sensor.qhy_268c_ra_of_telescope
+        name: Right Ascension
+        icon_type: none
+      - type: custom:mushroom-entity-card
+        entity: sensor.qhy_268c_declination_of_telescope
+        name: Declination
+        icon_type: none

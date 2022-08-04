@@ -1,0 +1,105 @@
+type: vertical-stack
+cards:
+  - color: rgb(51, 53, 58)
+    color_type: label-card
+    name: Esprit 120ED
+    styles:
+      card:
+        - height: 20px
+      name:
+        - font-weight: bold
+        - font-size: 14px
+        - color: white
+        - align-self: middle
+        - padding-bottom: 4px
+    type: custom:button-card
+  - square: false
+    columns: 2
+    type: grid
+    cards:
+      - type: custom:mushroom-entity-card
+        entity: sensor.esprit_120ed_altitude
+        name: Altitude
+        icon_type: none
+      - type: custom:mushroom-entity-card
+        entity: sensor.esprit_120ed_azimuth
+        name: Azimuth
+        icon_type: none
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 20
+        entities:
+          - entity: sensor.esprit_120ed_altitude
+            color: white
+        hours_to_show: 1
+        points_per_hour: 240
+        show:
+          name: false
+          icon: false
+          extrema: false
+          labels: true
+          state: false
+        type: custom:mini-graph-card
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 20
+        entities:
+          - entity: sensor.esprit_120ed_azimuth
+            color: white
+        hours_to_show: 1
+        points_per_hour: 240
+        show:
+          name: false
+          icon: false
+          extrema: false
+          labels: true
+          state: false
+        type: custom:mini-graph-card
+      - type: custom:mushroom-entity-card
+        entity: sensor.esprit_120ed_right_ascension
+        name: Right ascension
+        icon_type: none
+      - type: custom:mushroom-entity-card
+        entity: sensor.esprit_120ed_declination
+        name: Declination
+        icon_type: none
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 20
+        entities:
+          - entity: sensor.esprit_120ed_right_ascension
+            color: white
+        hours_to_show: 1
+        points_per_hour: 240
+        show:
+          name: false
+          icon: false
+          extrema: false
+          labels: true
+          state: false
+        type: custom:mini-graph-card
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 20
+        entities:
+          - entity: sensor.esprit_120ed_declination
+            color: white
+        hours_to_show: 1
+        points_per_hour: 240
+        show:
+          name: false
+          icon: false
+          extrema: false
+          labels: true
+          state: false
+        type: custom:mini-graph-card
+      - type: custom:mushroom-entity-card
+        entity: sensor.esprit_120ed_at_park
+        name: At Park
+      - type: custom:mushroom-entity-card
+        entity: sensor.esprit_120ed_at_home
+        name: At Home

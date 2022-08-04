@@ -1,0 +1,305 @@
+type: vertical-stack
+cards:
+  - color: rgb(51, 53, 58)
+    color_type: label-card
+    name: PowerBox
+    styles:
+      card:
+        - height: 20px
+      name:
+        - font-weight: bold
+        - font-size: 14px
+        - color: white
+        - align-self: middle
+        - padding-bottom: 4px
+    type: custom:button-card
+  - square: false
+    columns: 4
+    type: grid
+    cards:
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_value_10
+        secondary_info: state
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: Dew A
+        icon_type: none
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 20
+        entities:
+          - entity: sensor.pegasusastro_upbv2_switch_value_10
+            color: white
+        hours_to_show: 2
+        points_per_hour: 60
+        show:
+          name: false
+          icon: false
+          extrema: false
+          labels: true
+          state: false
+        type: custom:mini-graph-card
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_value_13
+        secondary_info: state
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: Voltage
+        icon_type: none
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 20
+        entities:
+          - entity: sensor.pegasusastro_upbv2_switch_value_13
+            color: white
+        hours_to_show: 2
+        points_per_hour: 60
+        show:
+          name: false
+          icon: false
+          extrema: false
+          labels: true
+          state: false
+        type: custom:mini-graph-card
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_value_11
+        secondary_info: state
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: Dew B
+        icon_type: none
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 20
+        entities:
+          - entity: sensor.pegasusastro_upbv2_switch_value_11
+            color: white
+        hours_to_show: 2
+        points_per_hour: 60
+        show:
+          name: false
+          icon: false
+          extrema: false
+          labels: true
+          state: false
+        type: custom:mini-graph-card
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_value_14
+        secondary_info: state
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: Current
+        icon_type: none
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 20
+        entities:
+          - entity: sensor.pegasusastro_upbv2_switch_value_14
+            color: white
+        hours_to_show: 2
+        points_per_hour: 60
+        show:
+          name: false
+          icon: false
+          extrema: false
+          labels: true
+          state: false
+        type: custom:mini-graph-card
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_value_12
+        secondary_info: state
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        fill_container: false
+        layout: horizontal
+        name: Dew C
+        icon_type: none
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 20
+        entities:
+          - entity: sensor.pegasusastro_upbv2_switch_value_12
+            color: white
+        hours_to_show: 2
+        points_per_hour: 60
+        show:
+          name: false
+          icon: false
+          extrema: false
+          labels: true
+          state: false
+        type: custom:mini-graph-card
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_value_15
+        secondary_info: state
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: Power
+        icon_type: none
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 20
+        entities:
+          - entity: sensor.pegasusastro_upbv2_switch_value_15
+            color: white
+        hours_to_show: 2
+        points_per_hour: 60
+        show:
+          name: false
+          icon: false
+          extrema: false
+          labels: true
+          state: false
+        type: custom:mini-graph-card
+  - square: false
+    columns: 2
+    type: grid
+    cards:
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_0
+        secondary_info: none
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        fill_container: false
+        layout: horizontal
+        name: QHY 268C (Power)
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_1
+        secondary_info: none
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: EQ6-R (Power)
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_2
+        secondary_info: none
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: Flat Mask (Power)
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_3
+        secondary_info: none
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: Out 4 (Power)
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_4
+        secondary_info: none
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        fill_container: false
+        layout: horizontal
+        name: QHY 268C (USB)
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_5
+        secondary_info: none
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: QHY 5III264C (USB)
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_6
+        secondary_info: none
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: EQ6-R (USB)
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_7
+        secondary_info: none
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: Polemaster (USB)
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_8
+        secondary_info: none
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        fill_container: false
+        layout: horizontal
+        name: USB 5
+      - type: custom:mushroom-entity-card
+        entity: sensor.pegasusastro_upbv2_switch_9
+        secondary_info: none
+        tap_action:
+          action: none
+        hold_action:
+          action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: USB 6

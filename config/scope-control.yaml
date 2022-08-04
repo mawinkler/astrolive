@@ -1,0 +1,98 @@
+cards:
+  - color: rgb(51, 53, 58)
+    color_type: label-card
+    name: Scope Control
+    styles:
+      card:
+        - height: 20px
+      name:
+        - font-weight: bold
+        - font-size: 14px
+        - color: white
+        - align-self: middle
+        - padding-bottom: 4px
+    type: custom:button-card
+  - square: false
+    columns: 3
+    type: grid
+    cards:
+      - type: entities
+        entities:
+          - entity: input_text.astrolive_target_ra_h
+            name: RA h
+            secondary_info: none
+        show_header_toggle: false
+      - type: entities
+        entities:
+          - entity: input_text.astrolive_target_ra_m
+            name: RA m
+            secondary_info: none
+        show_header_toggle: false
+      - type: entities
+        entities:
+          - entity: input_text.astrolive_target_ra_s
+            name: RA s
+            secondary_info: none
+        show_header_toggle: false
+      - type: entities
+        entities:
+          - entity: input_text.astrolive_target_dec_d
+            name: DEC d
+            secondary_info: none
+        show_header_toggle: false
+      - type: entities
+        entities:
+          - entity: input_text.astrolive_target_dec_m
+            name: DEC m
+            secondary_info: none
+        show_header_toggle: false
+      - type: entities
+        entities:
+          - entity: input_text.astrolive_target_dec_s
+            name: DEC s
+            secondary_info: none
+        show_header_toggle: false
+      - type: custom:mushroom-entity-card
+        entity: script.astrolive_send_command_slew
+        tap_action:
+          action: call-service
+          service: script.astrolive_send_command_slew
+          data:
+            component: obs.telescope
+            ra: |
+              {{ (float(states('input_text.astrolive_target_ra_h'))
+                + float(states('input_text.astrolive_target_ra_m')) / 60)
+                + float(states('input_text.astrolive_target_ra_s')) / 3600 }}
+            dec: |
+              {{ (float(states('input_text.astrolive_target_dec_d'))
+                + float(states('input_text.astrolive_target_dec_m')) / 60)
+                + float(states('input_text.astrolive_target_dec_s')) / 3600 }}
+          target: {}
+        name: Slew
+        secondary_info: none
+        fill_container: true
+      - type: custom:mushroom-entity-card
+        entity: script.astrolive_send_command
+        tap_action:
+          action: call-service
+          service: script.astrolive_send_command
+          data:
+            component: obs.telescope
+            command: park
+          target: {}
+        name: Park
+        secondary_info: none
+        fill_container: true
+      - type: custom:mushroom-entity-card
+        entity: script.astrolive_send_command
+        tap_action:
+          action: call-service
+          service: script.astrolive_send_command
+          data:
+            component: obs.telescope
+            command: unpark
+          target: {}
+        name: Unpark
+        secondary_info: none
+        fill_container: true
+type: vertical-stack
