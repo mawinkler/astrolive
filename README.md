@@ -17,10 +17,8 @@ AstroLive uses the nice ALPACA client implementation of the [OCA Box](https://gi
 - [My Personal Setup](#my-personal-setup)
 - [Usage](#usage)
   - [Installation and Configuration of ASCOM Remote Server](#installation-and-configuration-of-ascom-remote-server)
-  - [Configure AstroLive](#configure-astrolive)
+  - [Get and Configure AstroLive](#get-and-configure-astrolive)
   - [Run](#run)
-    - [Run with Python](#run-with-python)
-    - [Build & Run as a container](#build--run-as-a-container)
 - [Integrate with Home Assistant](#integrate-with-home-assistant)
   - [Devices and Sensors](#devices-and-sensors)
   - [Sending Commands](#sending-commands)
@@ -116,9 +114,19 @@ Links:
 - [ASCOM Alpaca Device API](https://ascom-standards.org/api/)
 - [Swagger](https://github.com/ASCOMInitiative/ASCOMRemote/blob/master/Swagger/ASCOMInitiative_ASCOMDeviceAPI_1.0.1-oas3_swagger.yaml)
 
-### Configure AstroLive
+### Get and Configure AstroLive
 
-Modify the supplied default.cfg.yaml to your needs. The yaml should be pretty self explanatory :-)
+Clone AstroLive
+
+```sh
+git clone https://github.com/mawinkler/astrolive
+```
+
+Now, create a `default.cfg.yaml` based on the supplied `default.cfg.yaml.sample` and modify it to your needs. The yaml should be pretty self explanatory :-)
+
+```sh
+cp astrolive/default.cfg.yaml.sample astrolive/default.cfg.yaml
+```
 
 > ***Note:*** If you are using drivers provided with the sequencer software, using ASCOM remote in parallel will mess up the imaging session when accessing the camera API. Tested with QHY and N.I.N.A./PHD2. For that reason, I'm always using the `camera_file` component witch checks for the latest FITS-file published within a given directory tree.
 
@@ -235,21 +243,25 @@ backyard:
 
 ### Run
 
-AstroLive checks recursively within the configured directory for new FITS files. By default it checks within the directory `/fits`.
+AstroLive checks recursively within the configured directory for new FITS files if you configured `camera_file`. By default it checks within the directory `/fits`.
 
 If you want to use TLS for the connection to the MQTT broker you need to provide the certificate of the certification authority which signed the MQTT server certificate (defaults to `/certs/ca.crt`).
 
-#### Run with Python
+**Run with Python**
 
 Ensure to have the dependencies installed
 
 ```sh
 pip3 install -r requirements.txt
+```
 
+Start AstroLive
+
+```sh
 python3 run.py
 ```
 
-#### Build & Run as a container
+**Build & Run as a container**
 
 This is the way :-).
 

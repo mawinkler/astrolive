@@ -1,0 +1,10 @@
+.vscode
+__pycache__
+config
+fits
+images
+.gitignore
+*.sh
+Dockerfile
+LICENSE
+README.md

@@ -1,0 +1,104 @@
+default:
+  include: backyard
+
+backyard:
+  observatory:
+    # Name of the observatory
+    comment: Backyard Scope
+    # Longitude
+    lon: <LONGITUDE>
+    # Lattitude
+    lat: <LATTITUDE>
+    # Elevation
+    elev: <ELEVATION>
+    # Communication protocol
+    protocol: alpaca
+    # Address of the ASCOM Remote server
+    address: http://<IP OF ASCOMRemote>:11111/api/v1
+
+    components:
+      telescope:
+        # Kind of the device
+        kind: telescope
+        comment: <NAME OF YOUR SCOPE>
+        # Device number as configured in ASCOM Remote
+        device_number: 0
+        # Name prefix of the created sensor in MQTT
+        friendly_name: <NAME OF YOUR SCOPE>
+        # Update interval in seconds
+        update_interval: 15
+        # List of components belonging to the telescope
+        components:
+          # Note to ASCOM:
+          # If you are using drivers provided with the sequencer software,
+          # using ASCOM remote in parallel will mess up the imaging session.
+          # Tested with QHY and N.I.N.A./PHD2.
+          
+          # Valid device kinds are
+          #   telescope: Telescope
+          #   dome: Dome (NYI)
+          #   camera: Camera
+          #   filterwheel: Filter Wheel (NYI)
+          #   focuser: Focuser
+          #   rotator: Rotator (NYI)
+          #   switch: Switch
+          #   safetymonitor: SafetyMonitor (NYI)
+          #   camera_file: Camera File, reads and processes the latest image within
+          #     from a configured location.
+
+          # camera:
+          #   # Kind of the device
+          #   kind: camera
+          #   # Device number as configured in ASCOM Remote
+          #   device_number: 0
+          #   # Name prefix of the created sensor in MQTT
+          #   friendly_name: <NAME OF YOUR IMAGING CAMERA>
+          #   # Get image via ASCOM remote. If false, process sensors only
+          #   image: true
+          #   # Update interval in seconds
+          #   update_interval: 60
+
+          # guiding_camera:
+          #   kind: camera
+          #   device_number: 1
+          #   friendly_name: <NAME OF YOUR GUIDING CAMERA>
+          #   image: true
+          #   update_interval: 60
+
+          camera_file:
+            kind: file
+            friendly_name: <NAME OF YOUR IMAGING CAMERA>
+            # Monitoring directory for new image files
+            # Only FITS files are supported
+            monitor: '/fits'
+            update_interval: 60
+
+          focuser:
+            kind: focuser
+            friendly_name: <NAME OF YOUR FOCUSER>
+            update_interval: 15
+
+          switch:
+            kind: switch
+            friendly_name: <NAME OF YOUR SWITCH>
+            update_interval: 30
+
+    # MQTT configuration
+    mqtt:
+      # Address of the MQTT broker
+      broker: <IP OF YOUR BROKER>
+      # Listen port of the MQTT broker
+      # defaut 1883 or 8883 for tls
+      port: 1883
+      # Client name for astrolive
+      client: astrolive
+      # Username
+      username: ''
+      # Password
+      password: ''
+      # TLS insecure
+      tls:
+        enabled: False
+        insecure: True
+        # The certification authority certificate which signed the MQTT server certicate
+        ca: /certs/ca.crt
