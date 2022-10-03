@@ -21,6 +21,7 @@ DEVICE_TYPE_CAMERA = "camera"
 DEVICE_TYPE_CAMERA_FILE = "camerafile"
 DEVICE_TYPE_SWITCH = "switch"
 DEVICE_TYPE_FOCUSER = "focuser"
+DEVICE_TYPE_FILTERWHEEL = "filterwheel"
 
 IMAGE_PUBLISH_DIMENSIONS = (1024, 685)
 IMAGE_STRETCH_FUNCTION = "asinh"
@@ -92,6 +93,11 @@ FUNCTIONS = {
         "Is moving",
     ),
     DEVICE_TYPE_SWITCH: ("Max switch",),
+    DEVICE_TYPE_FILTERWHEEL: (
+        "Names",
+        "Position",
+        "Current",
+    ),
 }
 
 ICONS = {
@@ -100,6 +106,7 @@ ICONS = {
     DEVICE_TYPE_CAMERA_FILE: "mdi:camera",
     DEVICE_TYPE_FOCUSER: "mdi:focus-auto",
     DEVICE_TYPE_SWITCH: "mdi:hubspot",
+    DEVICE_TYPE_FILTERWHEEL: "mdi:image-filter-black-white",
 }
 
 CAMERA_STATES = [

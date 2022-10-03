@@ -15,7 +15,7 @@ from tabulate import tabulate
 from .config import Config
 from .const import (COLOR_BLUE, COLOR_GREEN, DEVICE_TYPE_FOCUSER,
                     DEVICE_TYPE_OBSERVATORY, DEVICE_TYPE_SWITCH,
-                    DEVICE_TYPE_TELESCOPE, FUNCTIONS, ICONS)
+                    DEVICE_TYPE_TELESCOPE, DEVICE_TYPE_FILTERWHEEL, FUNCTIONS, ICONS)
 from .errors import AlpacaError, DeviceResponseError, RequestConnectionError
 from .mqttdevices import Connector as MqttConnector
 from .mqtthandler import Connector as MqttHandler
@@ -142,6 +142,15 @@ class AstroLive:
             _LOGGER.error(f"Connection Error to {command['component']}")
             pass
 
+        try:
+            if component.kind == DEVICE_TYPE_FILTERWHEEL:
+                if command["command"] == "setposition":
+                    component.setposition(command["id"], command["position"])
+                    _LOGGER.info(f"Executed FilterWheel set position on {command['id']} to {command['position']}")
+        except RequestConnectionError:
+            _LOGGER.error(f"Connection Error to {command['component']}")
+            pass
+        
     def _setup(self):
         """Create the MQTT connector"""
 

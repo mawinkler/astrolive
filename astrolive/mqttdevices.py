@@ -812,6 +812,61 @@ class Switch(MqttConnector):
             _LOGGER.error(f"{sys_id}: Not connected")
             raise de
 
+class FilterWheel(MqttConnector):
+    async def publish_loop(self, sys_id, device, device_type, interval):
+        """Publish the device state in an endless loop
+
+        Args:
+            sys_id (string): ID of the device.
+            device (Device): The device.
+            device_type (string): Type of the device.
+            interval (int): Update interval.
+        """
+
+        start = time.time()
+        while True:
+            try:
+                execution_time = round(time.time() - start, 1)
+                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
+                await self._publish_filterwheel(sys_id, device, device_type)
+                sleep(interval)
+            except KeyboardInterrupt:
+                break
+            except (RequestConnectionError, DeviceResponseError) as de:
+                _LOGGER.error("Stopping thread for %s", sys_id)
+                break
+        _LOGGER.warning(f"Thread {sys_id} exits")
+        exit(0)
+
+    async def _publish_filterwheel(self, sys_id, device, device_type):
+        """Publish the filterwheel state
+
+        Args:
+            sys_id (string): ID of the device.
+            device (Device): The device.
+            device_type (string): Type of the device.
+        """
+
+        sys_id_ = sys_id.replace(".", "_")
+
+        _LOGGER.debug(f"{sys_id}: Update")
+        topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
+        try:
+            if device.connected():
+                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                state = {
+                    "position": device.position(),
+                    "names": device.names(),
+                    "current": device.names()[device.position()],
+                }
+                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+            else:
+                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as de:
+            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error(f"{sys_id}: Not connected")
+            raise de
+
 
 _connector_classes = {
     "telescope": Telescope,
@@ -819,4 +874,5 @@ _connector_classes = {
     "camerafile": CameraFile,
     "focuser": Focuser,
     "switch": Switch,
+    "filterwheel": FilterWheel,
 }

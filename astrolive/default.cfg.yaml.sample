@@ -83,6 +83,11 @@ backyard:
             friendly_name: <NAME OF YOUR SWITCH>
             update_interval: 30
 
+          filterwheel:
+            kind: filterwheel
+            friendly_name: <NAME OF YOUR FILTERWHEEL>
+            update_interval: 15
+
     # MQTT configuration
     mqtt:
       # Address of the MQTT broker

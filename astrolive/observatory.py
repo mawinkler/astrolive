@@ -1376,6 +1376,16 @@ class FilterWheel(Device):
             return self._get("position")
         self._put("position", Position=Position)
 
+    def setposition(self, Position: int):
+        """Moves the filterwheel to a new position
+
+        Notes:
+            Moves the filterwheel to the specified position.
+
+        Args:
+            Position (int): Absolute position
+        """
+        self._put("position", Position=Position)
 
 class Telescope(Device):
     """Telescope specific methods."""
