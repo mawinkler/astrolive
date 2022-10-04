@@ -36,6 +36,7 @@ AstroLive uses the nice ALPACA client implementation of the [OCA Box](https://gi
   - Camera via File
   - Focuser
   - Switch
+  - FilterWheel
 - These configurations allow MQTT auto discovery in Home Assistant.
 - AstroLive then starts a seperate thread which queries the compenent status interval based according to the configuration and publishes the device state to MQTT.
 - If the component is of the type Camera the last captured FITS image is autostretched, downsized and published as a .jpg. This is the same for Camera via file where AstroLive watches a directory for new FITS images.
@@ -218,6 +219,11 @@ backyard:
             friendly_name: <NAME OF YOUR SWITCH>
             update_interval: 30
 
+          filterwheel:
+            kind: filterwheel
+            friendly_name: <NAME OF YOUR FILTERWHEEL>
+            update_interval: 15
+
     # MQTT configuration
     mqtt:
       # Address of the MQTT broker
@@ -325,11 +331,11 @@ Effectively, there is no configuration required if you just want to monitor your
 
 The following devices with the sensors attached are created in Home Assistant based on the example `default.cfg.yaml` from above:
 
-Telescope | Camera | Switch | Focuser
---------- | ------ | ------ | -------
-At home | Image Type | Max switch | Position
-At park | Exposure Duration | Switch 0 | Is moving
-Altitude | Time of observation | Switch 1
+Telescope | Camera | Switch | Focuser | FilterWheel
+--------- | ------ | ------ | ------- | -----------
+At home | Image Type | Max switch | Position | Position
+At park | Exposure Duration | Switch 0 | Is moving | Names
+Altitude | Time of observation | Switch 1 | Current
 Azimuth | X axis binning | Switch ...
 Declination | Y axis binning
 Declination rate | Gain
@@ -359,6 +365,7 @@ My personal Lovelace configuration from the screenshot above using `mushroom-ent
 - [Esprit 120ED](config/esprit120ed.yaml)
 - [Focuser](config/focuser.yaml)
 - [Powerbox](config/powerbox.yaml)
+- [FilterWheel](config/filterwheel.yaml)
 
 ### Sending Commands
 
@@ -485,6 +492,24 @@ sequence:
       payload_template: >
         {{ '{{ "component": "{}", "command": "{}", "id": "{}" }}'.format(
         component | trim, command | trim, id | trim ) }}
+mode: single
+```
+
+</details>
+
+Changing a filter.
+
+<details><summary><b>Show YAML</b></summary>
+
+```yaml
+alias: AstroLive - Send Command FilterWheel Set Position
+sequence:
+  - service: mqtt.publish
+    data:
+      topic: astrolive/command
+      payload_template: >
+        {{ '{{ "component": "{}", "command": "setposition", "position": "{}"
+        }}'.format( component | trim, position | trim ) }}
 mode: single
 ```
 
