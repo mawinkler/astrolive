@@ -335,7 +335,7 @@ Telescope | Camera | Switch | Focuser | FilterWheel
 --------- | ------ | ------ | ------- | -----------
 At home | Image Type | Max switch | Position | Position
 At park | Exposure Duration | Switch 0 | Is moving | Names
-Altitude | Time of observation | Switch 1 | Current
+Altitude | Time of observation | Switch 1 | | Current
 Azimuth | X axis binning | Switch ...
 Declination | Y axis binning
 Declination rate | Gain
