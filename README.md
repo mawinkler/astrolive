@@ -64,6 +64,7 @@ To give you an idea how I did setup my observatory together with AstroLive and [
   - Camera: QHY268c
   - Guide Camera: QHY5III462c
   - Off Axis Guider: OAG-M
+  - Filter Wheel: QHY CFW3M-US
   - Switch: PegasusAstro Ultimate Powerbox v2
   - Focuser: PegasusAstro Focus Cube
   - Mini PC: MeLE Quieter2 8GB 256GB Windows 10 Pro
@@ -174,7 +175,7 @@ backyard:
           #   telescope: Telescope
           #   dome: Dome (NYI)
           #   camera: Camera
-          #   filterwheel: Filter Wheel (NYI)
+          #   filterwheel: Filter Wheel
           #   focuser: Focuser
           #   rotator: Rotator (NYI)
           #   switch: Switch
@@ -301,6 +302,23 @@ docker run \
   astrolive
 ```
 
+Docker-compose example:
+
+```yaml
+version: "3.2"
+services:
+  astrolive:
+    image: astrolive:latest
+    container_name: astrolive
+    depends_on:
+      - mqtt
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - /fits:/fits:ro
+    restart: always
+```
+
 <details><summary><b>If using TLS</b></summary>
 
 ```sh
@@ -319,6 +337,24 @@ docker run \
   --name astrolive \
   --rm -d \
   astrolive
+```
+
+Docker-compose example:
+
+```yaml
+version: "3.2"
+services:
+  astrolive:
+    image: astrolive:latest
+    container_name: astrolive
+    depends_on:
+      - mqtt
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - /fits:/fits:ro
+      - /certs:/certs:ro
+    restart: always
 ```
 
 </details>
