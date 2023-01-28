@@ -37,6 +37,9 @@ AstroLive uses the nice ALPACA client implementation of the [OCA Box](https://gi
   - Focuser
   - Switch
   - FilterWheel
+  - Dome
+  - Rotator
+  - SafetyMonitor
 - These configurations allow MQTT auto discovery in Home Assistant.
 - AstroLive then starts a seperate thread which queries the compenent status interval based according to the configuration and publishes the device state to MQTT.
 - If the component is of the type Camera the last captured FITS image is autostretched, downsized and published as a .jpg. This is the same for Camera via file where AstroLive watches a directory for new FITS images.
@@ -173,13 +176,13 @@ backyard:
           
           # Valid device kinds are
           #   telescope: Telescope
-          #   dome: Dome (NYI)
+          #   dome: Dome
           #   camera: Camera
           #   filterwheel: Filter Wheel
           #   focuser: Focuser
-          #   rotator: Rotator (NYI)
+          #   rotator: Rotator
           #   switch: Switch
-          #   safetymonitor: SafetyMonitor (NYI)
+          #   safetymonitor: SafetyMonitor
           #   camera_file: Camera File, reads and processes the latest image within
           #     from a configured location.
 
@@ -224,6 +227,21 @@ backyard:
             kind: filterwheel
             friendly_name: <NAME OF YOUR FILTERWHEEL>
             update_interval: 15
+
+          dome:
+            kind: dome
+            friendly_name: <NAME OF YOUR DOME>
+            update_interval: 30
+          
+          safetymonitor:
+            kind: safetymonitor
+            friendly_name: <NAME OF YOUR SAFETYMONITOR>
+            update_interval: 30
+
+          rotator:
+            kind: rotator
+            friendly_name: <NAME OF YOUR ROTATOR>
+            update_interval: 30
 
     # MQTT configuration
     mqtt:
@@ -367,13 +385,13 @@ Effectively, there is no configuration required if you just want to monitor your
 
 The following devices with the sensors attached are created in Home Assistant based on the example `default.cfg.yaml` from above:
 
-Telescope | Camera | Switch | Focuser | FilterWheel
---------- | ------ | ------ | ------- | -----------
-At home | Image Type | Max switch | Position | Position
-At park | Exposure Duration | Switch 0 | Is moving | Names
-Altitude | Time of observation | Switch 1 | | Current
-Azimuth | X axis binning | Switch ...
-Declination | Y axis binning
+Telescope | Camera | Switch | Focuser | FilterWheel | Dome | Rotator | SafetyMonitor
+--------- | ------ | ------ | ------- | ----------- | ---- | ------- | -------------
+At home | Image Type | Max switch | Position | Position | Altitude | Mechanical position | Is safe
+At park | Exposure Duration | Switch 0 | Is moving | Names | At home | Position
+Altitude | Time of observation | Switch 1 | | Current | At park
+Azimuth | X axis binning | Switch ... | | | Azimuth
+Declination | Y axis binning | | | | Shutter status
 Declination rate | Gain
 Guiderate declination | Offset
 Right ascension | Pixel X axis size

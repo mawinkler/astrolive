@@ -65,7 +65,7 @@ class MqttConnector(Connector):
 
         options = args[0]
         self._publisher = kwargs["publisher"]
-        if self._publisher == None:
+        if self._publisher is None:
             _LOGGER.error("MQTT Publisher not existing")
             raise RequestConnectionError("MQTT Publisher not existing")
 
@@ -617,9 +617,10 @@ class CameraFile(MqttConnector):
             image_data = None
             try:
                 # , ignore_missing_simple=True
-                hdul = fits.open(latest_file)
-                hdr = hdul[0].header
-                image_data = fits.getdata(latest_file, ext=0)
+                with fits.open(latest_file) as hdul:
+                    # hdul = fits.open(latest_file)
+                    hdr = hdul[0].header
+                    image_data = fits.getdata(latest_file, ext=0)
             except OSError as ose:
                 _LOGGER.error(
                     f"{sys_id}: No SIMPLE card found, this file does not appear to be a valid FITS file"
@@ -867,6 +868,169 @@ class FilterWheel(MqttConnector):
             _LOGGER.error(f"{sys_id}: Not connected")
             raise de
 
+class Dome(MqttConnector):
+    async def publish_loop(self, sys_id, device, device_type, interval):
+        """Publish the device state in an endless loop
+
+        Args:
+            sys_id (string): ID of the device.
+            device (Device): The device.
+            device_type (string): Type of the device.
+            interval (int): Update interval.
+        """
+
+        start = time.time()
+        while True:
+            try:
+                execution_time = round(time.time() - start, 1)
+                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
+                await self._publish_dome(sys_id, device, device_type)
+                sleep(interval)
+            except KeyboardInterrupt:
+                break
+            except (RequestConnectionError, DeviceResponseError) as de:
+                _LOGGER.error("Stopping thread for %s", sys_id)
+                break
+        _LOGGER.warning(f"Thread {sys_id} exits")
+        exit(0)
+
+    async def _publish_dome(self, sys_id, device, device_type):
+        """Publish the dome state
+
+        Args:
+            sys_id (string): ID of the device.
+            device (Device): The device.
+            device_type (string): Type of the device.
+        """
+
+        sys_id_ = sys_id.replace(".", "_")
+
+        _LOGGER.debug(f"{sys_id}: Update")
+        topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
+        try:
+            if device.connected():
+                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                state = {
+                    "altitude": device.altitude(),
+                    "athome": device.athome(),
+                    "atpark": device.atpark(),
+                    "azimuth": device.azimuth(),
+                    "shutterstatus": device.shutterstatus(),
+                }
+                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+            else:
+                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as de:
+            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error(f"{sys_id}: Not connected")
+            raise de
+
+class Rotator(MqttConnector):
+    async def publish_loop(self, sys_id, device, device_type, interval):
+        """Publish the device state in an endless loop
+
+        Args:
+            sys_id (string): ID of the device.
+            device (Device): The device.
+            device_type (string): Type of the device.
+            interval (int): Update interval.
+        """
+
+        start = time.time()
+        while True:
+            try:
+                execution_time = round(time.time() - start, 1)
+                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
+                await self._publish_rotator(sys_id, device, device_type)
+                sleep(interval)
+            except KeyboardInterrupt:
+                break
+            except (RequestConnectionError, DeviceResponseError) as de:
+                _LOGGER.error("Stopping thread for %s", sys_id)
+                break
+        _LOGGER.warning(f"Thread {sys_id} exits")
+        exit(0)
+
+    async def _publish_rotator(self, sys_id, device, device_type):
+        """Publish the rotator state
+
+        Args:
+            sys_id (string): ID of the device.
+            device (Device): The device.
+            device_type (string): Type of the device.
+        """
+
+        sys_id_ = sys_id.replace(".", "_")
+
+        _LOGGER.debug(f"{sys_id}: Update")
+        topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
+        try:
+            if device.connected():
+                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                state = {
+                    "mechanicalposition": device.mechanicalposition(),
+                    "position": device.position(),
+                }
+                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+            else:
+                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as de:
+            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error(f"{sys_id}: Not connected")
+            raise de
+
+class SafetyMonitor(MqttConnector):
+    async def publish_loop(self, sys_id, device, device_type, interval):
+        """Publish the device state in an endless loop
+
+        Args:
+            sys_id (string): ID of the device.
+            device (Device): The device.
+            device_type (string): Type of the device.
+            interval (int): Update interval.
+        """
+
+        start = time.time()
+        while True:
+            try:
+                execution_time = round(time.time() - start, 1)
+                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
+                await self._publish_safetymonitor(sys_id, device, device_type)
+                sleep(interval)
+            except KeyboardInterrupt:
+                break
+            except (RequestConnectionError, DeviceResponseError) as de:
+                _LOGGER.error("Stopping thread for %s", sys_id)
+                break
+        _LOGGER.warning(f"Thread {sys_id} exits")
+        exit(0)
+
+    async def _publish_safetymonitor(self, sys_id, device, device_type):
+        """Publish the safetymonitor state
+
+        Args:
+            sys_id (string): ID of the device.
+            device (Device): The device.
+            device_type (string): Type of the device.
+        """
+
+        sys_id_ = sys_id.replace(".", "_")
+
+        _LOGGER.debug(f"{sys_id}: Update")
+        topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
+        try:
+            if device.connected():
+                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                state = {
+                    "issafe": device.issafe(),
+                }
+                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+            else:
+                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as de:
+            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error(f"{sys_id}: Not connected")
+            raise de
 
 _connector_classes = {
     "telescope": Telescope,
@@ -875,4 +1039,7 @@ _connector_classes = {
     "focuser": Focuser,
     "switch": Switch,
     "filterwheel": FilterWheel,
+    "dome": Dome,
+    "safetymonitor": SafetyMonitor,
+    "rotator": Rotator
 }

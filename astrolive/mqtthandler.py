@@ -70,7 +70,7 @@ class MqttHandler(Connector):
             random.SystemRandom().choice(string.ascii_uppercase + string.digits)
             for _ in range(12)
         )
-        if self._publisher == None:
+        if self._publisher is None:
             proto = mqtt.MQTTv311
             self._client = mqtt.Client(
                 f"{options['mqtt']['client']}-{unique_id}", proto
@@ -81,7 +81,7 @@ class MqttHandler(Connector):
             self._client.on_disconnect = self.on_disconnect
             self._client.will_set("astrolive/lwt", payload="OFF")
 
-            if options["mqtt"]["tls"]["enabled"] == True:
+            if options["mqtt"]["tls"]["enabled"] is True:
                 self._client.tls_set(
                     options["mqtt"]["tls"]["ca"],
                     tls_version=ssl.PROTOCOL_TLSv1_2,
@@ -189,7 +189,7 @@ class MqttHandler(Connector):
         """Send a MQTT message one by one"""
 
         while True:
-            if self._client.is_connected == False:
+            if self._client.is_connected is False:
                 _LOGGER.warning(f"Reconnecting to MQTT Broker")
                 self._client.reconnect()
 
@@ -215,7 +215,7 @@ class MqttListener(Connector):
             random.SystemRandom().choice(string.ascii_uppercase + string.digits)
             for _ in range(12)
         )
-        if self._listener == None:
+        if self._listener is None:
             proto = mqtt.MQTTv311
             self._client = mqtt.Client(
                 f"{options['mqtt']['client']}-{unique_id}", proto
@@ -226,7 +226,7 @@ class MqttListener(Connector):
             self._client.on_disconnect = self.on_disconnect
             self._client.will_set("astrolive/lwt", payload="OFF")
 
-            if options["mqtt"]["tls"]["enabled"] == True:
+            if options["mqtt"]["tls"]["enabled"] is True:
                 self._client.tls_set(
                     options["mqtt"]["tls"]["ca"],
                     tls_version=ssl.PROTOCOL_TLSv1_2,
@@ -277,11 +277,11 @@ class MqttListener(Connector):
         """Send a MQTT message one by one"""
 
         while True:
-            if self._client.is_connected == False:
+            if self._client.is_connected is False:
                 _LOGGER.warning(f"Reconnecting to MQTT Broker")
                 self._client.reconnect()
 
-            if len(self._messages) > 0:
+            if self._messages:
                 _LOGGER.debug(f"Queue length: {len(self._messages)}")
                 message = self._messages.pop(0)
                 if message:

@@ -36,13 +36,13 @@ backyard:
           
           # Valid device kinds are
           #   telescope: Telescope
-          #   dome: Dome (NYI)
+          #   dome: Dome
           #   camera: Camera
-          #   filterwheel: Filter Wheel (NYI)
+          #   filterwheel: Filter Wheel
           #   focuser: Focuser
-          #   rotator: Rotator (NYI)
+          #   rotator: Rotator
           #   switch: Switch
-          #   safetymonitor: SafetyMonitor (NYI)
+          #   safetymonitor: SafetyMonitor
           #   camera_file: Camera File, reads and processes the latest image within
           #     from a configured location.
 
@@ -87,6 +87,21 @@ backyard:
             kind: filterwheel
             friendly_name: <NAME OF YOUR FILTERWHEEL>
             update_interval: 15
+
+          dome:
+            kind: dome
+            friendly_name: <NAME OF YOUR DOME>
+            update_interval: 30
+          
+          safetymonitor:
+            kind: safetymonitor
+            friendly_name: <NAME OF YOUR SAFETYMONITOR>
+            update_interval: 30
+
+          rotator:
+            kind: rotator
+            friendly_name: <NAME OF YOUR ROTATOR>
+            update_interval: 30
 
     # MQTT configuration
     mqtt:

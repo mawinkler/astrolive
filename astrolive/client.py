@@ -204,7 +204,7 @@ class AstroLive:
 
         # Start the threads one after the other
         for thread in self._threads:
-            if thread.is_alive() == False:
+            if not thread.is_alive():
                 try:
                     thread.start()
                     _LOGGER.info(f"Thread {thread.name} started")
@@ -274,7 +274,7 @@ class AstroLive:
 
         threads_dead = []
         for thread in self._threads:
-            if thread.is_alive() != True:
+            if thread.is_alive() is not True:
                 threads_dead.append(thread.name)
         return threads_dead
 
@@ -285,7 +285,7 @@ class AstroLive:
             List of threads dead.
         """
 
-        if self.obs == None:
+        if self.obs is None:
             self.obs = Observatory()
             self.obs.connect(preset="backyard")
 

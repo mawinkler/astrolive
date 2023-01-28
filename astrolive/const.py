@@ -22,6 +22,9 @@ DEVICE_TYPE_CAMERA_FILE = "camerafile"
 DEVICE_TYPE_SWITCH = "switch"
 DEVICE_TYPE_FOCUSER = "focuser"
 DEVICE_TYPE_FILTERWHEEL = "filterwheel"
+DEVICE_TYPE_DOME = "dome"
+DEVICE_TYPE_ROTATOR = "rotator"
+DEVICE_TYPE_SAFETYMONITOR = "safetymonitor"
 
 IMAGE_PUBLISH_DIMENSIONS = (1024, 685)
 IMAGE_STRETCH_FUNCTION = "asinh"
@@ -98,6 +101,20 @@ FUNCTIONS = {
         "Position",
         "Current",
     ),
+    DEVICE_TYPE_DOME: (
+        "Altitude",
+        "At home",
+        "At park",
+        "Azimuth",
+        "Shutter status",
+    ),
+    DEVICE_TYPE_ROTATOR: (
+        "Mechanical position",
+        "Position",
+    ),
+    DEVICE_TYPE_SAFETYMONITOR: (
+        "Is safe",
+    ),
 }
 
 ICONS = {
@@ -107,6 +124,9 @@ ICONS = {
     DEVICE_TYPE_FOCUSER: "mdi:focus-auto",
     DEVICE_TYPE_SWITCH: "mdi:hubspot",
     DEVICE_TYPE_FILTERWHEEL: "mdi:image-filter-black-white",
+    DEVICE_TYPE_DOME: "mdi:greenhouse",
+    DEVICE_TYPE_ROTATOR: "mdi:rotate-360",
+    DEVICE_TYPE_SAFETYMONITOR: "mdi:seatbelt",
 }
 
 CAMERA_STATES = [
