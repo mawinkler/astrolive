@@ -1,3 +1,9 @@
+# [0.3](https://github.com/mawinkler/astrolive/compare/v0.2...v0.3) (2023-02-27)
+
+### Features
+
+- Fix to enable different configurations.
+
 # [0.2](https://github.com/mawinkler/astrolive/compare/v0.1...v0.2) (2023-01-28)
 
 ### Features

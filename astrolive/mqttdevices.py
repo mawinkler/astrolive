@@ -145,6 +145,7 @@ class MqttConnector(Connector):
                     "model": device_friendly_name_cap,
                     "manufacturer": MANUFACTURER,
                 },
+                "retain": "OFF",
             }
             await self._publisher._publish_mqtt(
                 root_topic + "config", json.dumps(config)
@@ -180,6 +181,7 @@ class MqttConnector(Connector):
                     "model": device_friendly_name_cap,
                     "manufacturer": MANUFACTURER,
                 },
+                "retain": "OFF",
             }
             await self._publisher._publish_mqtt(
                 root_topic + "config", json.dumps(config)

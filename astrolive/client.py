@@ -217,17 +217,21 @@ class AstroLive:
                     pass
                 except KeyboardInterrupt:
                     break
-                sleep(5)
+                sleep(3)
 
         return None
 
     async def health_check(self) -> None:
         """Report the healt of the worker threads."""
-
+        _LOGGER.info(f"Health check:")
         print(
-            f"\n{self.esc(COLOR_GREEN)}Alive: {await self._query_threads_alive()}{self.esc('0')}, "
-            + f"{self.esc(COLOR_GREEN)}Dead: {await self._query_threads_dead()}{self.esc('0')}, "
-            + f"{self.esc(COLOR_GREEN)}Restarts: {self._tread_restarts}{self.esc('0')}\n"
+            f"{self.esc(COLOR_GREEN)}Alive: {await self._query_threads_alive()}{self.esc('0')},"
+        )
+        print(
+            f"{self.esc(COLOR_GREEN)}Dead: {await self._query_threads_dead()}{self.esc('0')},"
+        )
+        print(
+            f"{self.esc(COLOR_GREEN)}Restarts: {self._tread_restarts}{self.esc('0')}\n"
         )
 
         return None
@@ -287,7 +291,7 @@ class AstroLive:
 
         if self.obs is None:
             self.obs = Observatory()
-            self.obs.connect(preset="backyard")
+            self.obs.connect()
 
         # Iteration of all children of Observatory object
         children = {}
@@ -330,17 +334,20 @@ class AstroLive:
             )
 
         # Printing tabulated results
+        _LOGGER.info(f"Status:")
         df = pd.DataFrame(children)
         print(
-            f"\n{self.esc(COLOR_BLUE)}"
+            f"{self.esc(COLOR_BLUE)}"
             + f"{tabulate(df.T, headers='keys')}"
             + f"{self.esc('0')}\n"
         )
 
         for child in children:
             if children[child].get("kind") != DEVICE_TYPE_OBSERVATORY:
+                _LOGGER.debug(f"Verifying a {children[child].get('kind')}")
                 try:
                     if children[child].get("connected") == True:
+                        _LOGGER.debug(f"Verifying a {children[child].get('kind')} which is {children[child].get('friendly_name')}")
                         sys_id = child
                         device_type = children[child].get("kind")
                         device_friendly_name = children[child].get("friendly_name")
@@ -364,6 +371,7 @@ class AstroLive:
                             # If device is of type switch enumerate the ports
                             if device_type == DEVICE_TYPE_SWITCH:
                                 max_switch = self.obs.telescope.switch.maxswitch()
+                                _LOGGER.debug(f"Verifying {children[child].get('friendly_name')} has {max_switch} switches")
                                 for port_id in range(0, max_switch):
                                     device_functions.append("Switch " + str(port_id))
                                     device_functions.append(

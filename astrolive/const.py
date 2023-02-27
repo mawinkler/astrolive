@@ -1,6 +1,6 @@
 """Constant Definitions for AstroLive."""
 
-MANUFACTURER = "AstroLive 0.1"
+MANUFACTURER = "AstroLive 0.3"
 API_ENDPOINT = "http://localhost:11111/api/v1"
 CLIENT_ID = 1
 
