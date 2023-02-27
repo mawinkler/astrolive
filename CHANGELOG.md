@@ -2,7 +2,7 @@
 
 ### Features
 
-- Added support for filter wheels
+- Added support for filter wheel, dome, rotator, and safetymonitor
 
 # [0.1](https://github.com/mawinkler/astrolive/releases/tag/v0.1) (2022-08-04)
 
