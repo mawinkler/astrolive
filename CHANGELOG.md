@@ -1,4 +1,4 @@
-# [0.2](https://github.com/mawinkler/astrolive/compare/v0.1...v0.2) (2022-10-05)
+# [0.2](https://github.com/mawinkler/astrolive/compare/v0.1...v0.2) (2023-01-28)
 
 ### Features
 
