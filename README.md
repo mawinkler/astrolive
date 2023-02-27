@@ -333,6 +333,7 @@ services:
     environment:
       - TZ=Europe/Berlin
     volumes:
+      - /astrolive/backyard.cfg.yaml:/usr/src/app/astrolive/default.cfg.yaml
       - /fits:/fits:ro
     restart: always
 ```
@@ -370,6 +371,7 @@ services:
     environment:
       - TZ=Europe/Berlin
     volumes:
+      - /astrolive/backyard.cfg.yaml:/usr/src/app/astrolive/default.cfg.yaml
       - /fits:/fits:ro
       - /certs:/certs:ro
     restart: always
