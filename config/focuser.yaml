@@ -18,7 +18,7 @@ cards:
     type: grid
     cards:
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_focuscube_2_position
+        entity: sensor.astrolive_pegasusastro_focuscube_2_position
         name: Position
         icon_type: none
         fill_container: true
@@ -27,7 +27,7 @@ cards:
         line_width: 2
         font_size: 20
         entities:
-          - entity: sensor.pegasusastro_focuscube_2_position
+          - entity: sensor.astrolive_pegasusastro_focuscube_2_position
             color: white
         hours_to_show: 2
         points_per_hour: 240

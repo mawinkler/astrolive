@@ -7,15 +7,31 @@ import traceback
 from threading import Thread
 from time import sleep
 from tokenize import String
-from typing import List, Optional
+from typing import Optional
 
 import pandas as pd
 from tabulate import tabulate
 
 from .config import Config
-from .const import (COLOR_BLUE, COLOR_GREEN, DEVICE_TYPE_FOCUSER,
-                    DEVICE_TYPE_OBSERVATORY, DEVICE_TYPE_SWITCH,
-                    DEVICE_TYPE_TELESCOPE, DEVICE_TYPE_FILTERWHEEL, FUNCTIONS, ICONS)
+from .const import (
+    COLOR_BLUE,
+    COLOR_GREEN,
+    FUNCTIONS,
+    DEVICE_TYPE_FOCUSER,
+    DEVICE_TYPE_OBSERVATORY,
+    DEVICE_TYPE_SWITCH,
+    DEVICE_TYPE_TELESCOPE,
+    DEVICE_TYPE_FILTERWHEEL,
+    DEVICE_TYPE_SWITCH_ICON,
+    STATE_ON,
+    STATE_OFF,
+    TYPE_SWITCH,
+    TYPE_SENSOR,
+    UNIT_OF_MEASUREMENT_NONE,
+    DEVICE_CLASS_SWITCH,
+    DEVICE_CLASS_NONE,
+    STATE_CLASS_NONE,
+)
 from .errors import AlpacaError, DeviceResponseError, RequestConnectionError
 from .mqttdevices import Connector as MqttConnector
 from .mqtthandler import Connector as MqttHandler
@@ -59,11 +75,11 @@ class AstroLive:
         return None
 
     # Command callback
-    def on_command(self, client, userdata, message):
+    def on_command(self, client, userdata, command):
         """Parsing and executing commands received via MQTT
 
         Args:
-            message: JSON string with the command
+            message: Dictionary with the command and component information
 
         Expected message format is (examples):
             {
@@ -83,81 +99,82 @@ class AstroLive:
             }
         """
 
-        command = json.loads(message.payload.decode("utf-8"))
+        _LOGGER.debug("Command: %s.", command)
         component = None
         try:
-            component = self.obs.component_by_absolute_sys_id(
-                command.get("component", None)
-            )
+            component = self.obs.component_by_absolute_sys_id(command.get("component", None))
         except LookupError:
-            _LOGGER.error(f"Can not find component sys_id={command['component']}.")
-            pass
+            _LOGGER.error("Can not find component sys_id=%s.", command["component"])
 
         try:
             if component.kind == DEVICE_TYPE_TELESCOPE:
                 if command["command"] == "park":
                     component.park()
-                    _LOGGER.info(f"Executed Telescope park")
+                    _LOGGER.info("Executed Telescope park")
                 if command["command"] == "unpark":
                     component.unpark()
-                    _LOGGER.info(f"Executed Telescope unpark")
+                    _LOGGER.info("Executed Telescope unpark")
                 if command["command"] == "slew":
                     _LOGGER.info(
-                        f"Slewing Telescope slew to RA: {command['ra']}, DEC: {command['dec']}"
+                        "Slewing Telescope slew to RA: %d, DEC: %d",
+                        command["ra"],
+                        command["dec"],
                     )
                     component.slewtocoordinates(command["ra"], command["dec"])
                     _LOGGER.info(
-                        f"Executed Telescope slew to RA: {command['ra']}, DEC: {command['dec']}"
+                        "Executed Telescope slew to RA: %d, DEC: %d",
+                        command["ra"],
+                        command["dec"],
                     )
         except RequestConnectionError:
-            _LOGGER.error(f"Connection Error to {command['component']}")
-            pass
-        except TypeError as te:
-            _LOGGER.error(f"TypeError {te}")
-            pass
-        except AlpacaError as ae:
-            _LOGGER.error(f"AlpacaError {ae}")
-            pass
+            _LOGGER.error("Connection Error to %s", command["component"])
+
+        except TypeError as texc:
+            _LOGGER.error(texc)
+
+        except AlpacaError as aexc:
+            _LOGGER.error(aexc)
 
         try:
             if component.kind == DEVICE_TYPE_FOCUSER:
                 if command["command"] == "move":
                     component.move(command["position"])
                     _LOGGER.info(
-                        f"Executed Focuser move on {command['component']} to position {command['position']}"
+                        "Executed Focuser move on %s to position %d",
+                        command["component"],
+                        command["position"],
                     )
         except RequestConnectionError:
-            _LOGGER.error(f"Connection Error to {command['component']}")
-            pass
+            _LOGGER.error("Connection Error to %s", command["component"])
 
         try:
             if component.kind == DEVICE_TYPE_SWITCH:
-                if command["command"] == "off":
+                if command["command"] == STATE_OFF:
                     component.setswitch(command["id"], False)
-                    _LOGGER.info(f"Executed Switch turn off on {command['id']}")
-                if command["command"] == "on":
+                    _LOGGER.info("Executed Switch turn off on %s", command["id"])
+                if command["command"] == STATE_ON:
                     component.setswitch(command["id"], True)
-                    _LOGGER.info(f"Executed Switch turn on on {command['id']}")
+                    _LOGGER.info("Executed Switch turn on on %s", command["id"])
         except RequestConnectionError:
-            _LOGGER.error(f"Connection Error to {command['component']}")
-            pass
+            _LOGGER.error("Connection Error to %s", command["component"])
 
         try:
             if component.kind == DEVICE_TYPE_FILTERWHEEL:
                 if command["command"] == "setposition":
                     component.setposition(command["id"], command["position"])
-                    _LOGGER.info(f"Executed FilterWheel set position on {command['id']} to {command['position']}")
+                    _LOGGER.info(
+                        "Executed FilterWheel set position on %s to %d",
+                        command["id"],
+                        command["position"],
+                    )
         except RequestConnectionError:
-            _LOGGER.error(f"Connection Error to {command['component']}")
-            pass
-        
+            _LOGGER.error("Connection Error to %s", command["component"])
+
     def _setup(self):
         """Create the MQTT connector"""
 
         try:
-            self._mqtthandler = MqttHandler.create_connector(
-                "handler", self._options, publisher=None
-            )
+            self._mqtthandler = MqttHandler.create_connector("handler", self._options, publisher=None)
             self._mqtthandler.on_command = self.on_command
         except KeyError:
             pass
@@ -185,7 +202,7 @@ class AstroLive:
     ) -> None:
         """Start the looper thread."""
 
-        _LOGGER.info(f"Creating thread mqtt.looper")
+        _LOGGER.info("Creating thread mqtt.looper")
         self._threads.insert(
             0,
             Thread(
@@ -207,32 +224,24 @@ class AstroLive:
             if not thread.is_alive():
                 try:
                     thread.start()
-                    _LOGGER.info(f"Thread {thread.name} started")
-                    self._tread_restarts[thread.name] = (
-                        self._tread_restarts.get(thread.name, -1) + 1
-                    )
-                except RuntimeError as re:
-                    _LOGGER.info(f"Removing dead thread {thread.name}")
+                    _LOGGER.info("Thread %s started", thread.name)
+                    self._tread_restarts[thread.name] = self._tread_restarts.get(thread.name, -1) + 1
+                except RuntimeError:
+                    _LOGGER.info("Removing dead thread %s", thread.name)
                     self._threads.remove(thread)
-                    pass
                 except KeyboardInterrupt:
                     break
+
                 sleep(3)
 
         return None
 
     async def health_check(self) -> None:
         """Report the healt of the worker threads."""
-        _LOGGER.info(f"Health check:")
-        print(
-            f"{self.esc(COLOR_GREEN)}Alive: {await self._query_threads_alive()}{self.esc('0')},"
-        )
-        print(
-            f"{self.esc(COLOR_GREEN)}Dead: {await self._query_threads_dead()}{self.esc('0')},"
-        )
-        print(
-            f"{self.esc(COLOR_GREEN)}Restarts: {self._tread_restarts}{self.esc('0')}\n"
-        )
+        _LOGGER.info("Health check:")
+        print(f"{self.esc(COLOR_GREEN)}Alive: {await self._query_threads_alive()}{self.esc('0')},")
+        print(f"{self.esc(COLOR_GREEN)}Dead: {await self._query_threads_dead()}{self.esc('0')},")
+        print(f"{self.esc(COLOR_GREEN)}Restarts: {self._tread_restarts}{self.esc('0')}\n")
 
         return None
 
@@ -250,12 +259,11 @@ class AstroLive:
         for thread in self._threads:
             if thread.name == sys_id:
                 if thread.is_alive():
-                    _LOGGER.debug(f"Thread {thread.name} is alive")
+                    _LOGGER.debug("Thread %s is alive", thread.name)
                     return True
-                else:
-                    _LOGGER.debug(f"Removing dead thread {thread.name}")
-                    self._threads.remove(thread)
-        _LOGGER.debug(f"Thread {sys_id} not existing")
+                _LOGGER.debug("Removing dead thread %s", thread.name)
+                self._threads.remove(thread)
+        _LOGGER.debug("Thread %s not existing", sys_id)
 
     async def _query_threads_alive(self) -> list:
         """Returns a list of threads alive.
@@ -296,7 +304,7 @@ class AstroLive:
         # Iteration of all children of Observatory object
         children = {}
         for child in self.obs.children_tree_iter():
-            if type(child) is Observatory:
+            if isinstance(child, Observatory):
                 continue
             children[child.sys_id] = {
                 "kind": child.kind,
@@ -305,7 +313,7 @@ class AstroLive:
                 "description": "",
                 "driverversion": "",
             }
-            if type(child) is CameraFile:
+            if isinstance(child, CameraFile):
                 children[child.sys_id]["connected"] = True
             else:
                 try:  # connection may fail, Component may not be a Device
@@ -320,63 +328,72 @@ class AstroLive:
                     DeviceResponseError,
                 ):  # connection to telescope failed
                     pass
-            children[child.sys_id]["comment"] = child.component_options.get(
-                "comment", ""
-            )
-            children[child.sys_id]["friendly_name"] = child.component_options.get(
-                "friendly_name", ""
-            )
-            children[child.sys_id]["monitor"] = child.component_options.get(
-                "monitor", ""
-            )
-            children[child.sys_id]["update_interval"] = child.component_options.get(
-                "update_interval", ""
-            )
+            children[child.sys_id]["comment"] = child.component_options.get("comment", "")
+            children[child.sys_id]["friendly_name"] = child.component_options.get("friendly_name", "")
+            children[child.sys_id]["monitor"] = child.component_options.get("monitor", "")
+            children[child.sys_id]["update_interval"] = child.component_options.get("update_interval", "")
 
         # Printing tabulated results
-        _LOGGER.info(f"Status:")
-        df = pd.DataFrame(children)
-        print(
-            f"{self.esc(COLOR_BLUE)}"
-            + f"{tabulate(df.T, headers='keys')}"
-            + f"{self.esc('0')}\n"
-        )
+        _LOGGER.info("Status:")
+        children_df = pd.DataFrame(children)
+        print(f"{self.esc(COLOR_BLUE)}" + f"{tabulate(children_df.T, headers='keys')}" + f"{self.esc('0')}\n")
 
         for child in children:
             if children[child].get("kind") != DEVICE_TYPE_OBSERVATORY:
-                _LOGGER.debug(f"Verifying a {children[child].get('kind')}")
+                _LOGGER.debug("Verifying a %s", children[child].get("kind"))
                 try:
-                    if children[child].get("connected") == True:
-                        _LOGGER.debug(f"Verifying a {children[child].get('kind')} which is {children[child].get('friendly_name')}")
+                    if children[child].get("connected") is True:
+                        _LOGGER.debug(
+                            "Verifying a %s which is %s",
+                            children[child].get("kind"),
+                            children[child].get("friendly_name"),
+                        )
                         sys_id = child
                         device_type = children[child].get("kind")
                         device_friendly_name = children[child].get("friendly_name")
                         device_functions = list(FUNCTIONS.get(device_type))
-                        device_icon = ICONS.get(device_type)
                         update_interval = children[child].get("update_interval")
 
-                        if await self._query_thread_alive(sys_id) != True:
+                        if await self._query_thread_alive(sys_id) is not True:
                             try:
                                 mqtt_connector = MqttConnector.create_connector(
                                     device_type,
                                     self._options,
                                     publisher=self._mqtthandler,
                                 )
-                            except Exception as e:
-                                traceback.print_exc(file=sys.stdout)
-                                _LOGGER.error(e)
                             except KeyError:
                                 pass
+                            except Exception as exc:
+                                traceback.print_exc(file=sys.stdout)
+                                _LOGGER.error(exc)
 
                             # If device is of type switch enumerate the ports
                             if device_type == DEVICE_TYPE_SWITCH:
                                 max_switch = self.obs.telescope.switch.maxswitch()
-                                _LOGGER.debug(f"Verifying {children[child].get('friendly_name')} has {max_switch} switches")
+                                _LOGGER.debug(
+                                    "Verifying %s has %d switches",
+                                    children[child].get("friendly_name"),
+                                    max_switch,
+                                )
                                 for port_id in range(0, max_switch):
-                                    device_functions.append("Switch " + str(port_id))
                                     device_functions.append(
-                                        "Switch Value " + str(port_id)
-                                    )
+                                        [
+                                            TYPE_SWITCH,
+                                            "Switch " + str(port_id),
+                                            UNIT_OF_MEASUREMENT_NONE,
+                                            DEVICE_TYPE_SWITCH_ICON,
+                                            DEVICE_CLASS_SWITCH,
+                                            STATE_CLASS_NONE,
+                                        ])
+                                    device_functions.append(
+                                        [
+                                            TYPE_SENSOR,
+                                            "Switch Value " + str(port_id),
+                                            UNIT_OF_MEASUREMENT_NONE,
+                                            DEVICE_TYPE_SWITCH_ICON,
+                                            DEVICE_CLASS_NONE,
+                                            STATE_CLASS_NONE,
+                                        ])
 
                             # Create entity configuration in mqtt
                             await mqtt_connector.create_mqtt_config(
@@ -384,20 +401,17 @@ class AstroLive:
                                 device_type,
                                 device_friendly_name,
                                 device_functions,
-                                device_icon,
                             )
 
                             # Create thread
-                            _LOGGER.info(f"Creating thread {sys_id}")
+                            _LOGGER.info("Creating thread %s", sys_id)
                             self._threads.append(
                                 Thread(
                                     target=asyncio.run,
                                     args=(
                                         mqtt_connector.publish_loop(
                                             sys_id,
-                                            self.obs.component_by_absolute_sys_id(
-                                                sys_id
-                                            ),
+                                            self.obs.component_by_absolute_sys_id(sys_id),
                                             device_type,
                                             update_interval,
                                         ),

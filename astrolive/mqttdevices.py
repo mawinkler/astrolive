@@ -4,28 +4,60 @@ import json
 import logging
 import os
 import time
-from datetime import datetime
-from doctest import ELLIPSIS_MARKER
+import sys
+from datetime import datetime, timezone
 from time import sleep
 from typing import Callable, Iterable, Tuple
 
 import cv2
 import numpy as np
 from astropy.io import fits
-from astropy.visualization import (AsinhStretch, AsymmetricPercentileInterval,
-                                   LinearStretch, LogStretch, ManualInterval,
-                                   MinMaxInterval, SinhStretch, SqrtStretch)
+from astropy.visualization import (
+    AsinhStretch,
+    AsymmetricPercentileInterval,
+    LinearStretch,
+    LogStretch,
+    ManualInterval,
+    MinMaxInterval,
+    SinhStretch,
+    SqrtStretch,
+)
 from cv2 import imencode
 
-from .const import (CAMERA_SENSOR_TYPES, CAMERA_STATES, DEVICE_TYPE_CAMERA,
-                    DEVICE_TYPE_CAMERA_FILE, IMAGE_INVERT,
-                    IMAGE_MINMAX_PERCENT, IMAGE_MINMAX_VALUE,
-                    IMAGE_PUBLISH_DIMENSIONS, IMAGE_STRETCH_FUNCTION,
-                    MANUFACTURER)
+from .const import (
+    CAMERA_SENSOR_TYPES,
+    CAMERA_STATES,
+    DEVICE_TYPE_CAMERA,
+    DEVICE_TYPE_CAMERA_FILE,
+    IMAGE_INVERT,
+    IMAGE_MINMAX_PERCENT,
+    IMAGE_MINMAX_VALUE,
+    IMAGE_STRETCH_FUNCTION,
+    MANUFACTURER,
+    SENSOR_TYPE,
+    SENSOR_NAME,
+    SENSOR_UNIT,
+    SENSOR_ICON,
+    SENSOR_DEVICE_CLASS,
+    SENSOR_STATE_CLASS,
+    STATE_ON,
+    STATE_OFF,
+    TYPE_TEXT,
+    DEVICE_CLASS_SWITCH,
+)
 from .errors import AlpacaError, DeviceResponseError, RequestConnectionError
-from .observatory import (Camera, CameraFile, Component, Dome, FilterWheel,
-                          Focuser, Observatory, Rotator, SafetyMonitor, Switch,
-                          Telescope)
+from .observatory import (
+    Camera,
+    CameraFile,
+    Component,
+    Dome,
+    FilterWheel,
+    Focuser,
+    Rotator,
+    SafetyMonitor,
+    Switch,
+    Telescope,
+)
 
 _LOGGER = logging.getLogger(__name__)
 logging.getLogger("mqtt").setLevel(logging.DEBUG)
@@ -62,8 +94,7 @@ class MqttConnector(Connector):
     """Specialized MQTT Connector"""
 
     def __init__(self, *args, **kwargs) -> None:
-
-        options = args[0]
+        # options = args[0]
         self._publisher = kwargs["publisher"]
         if self._publisher is None:
             _LOGGER.error("MQTT Publisher not existing")
@@ -73,24 +104,13 @@ class MqttConnector(Connector):
         self._store = {}
         super().__init__()
 
-    def connect(*args, **kwargs):
+    def connect(self, *args, **kwargs):
         """Connect"""
-
-        pass
 
     def configure_components(self):
         """Configure Components"""
 
-        pass
-
-    """
-    Create the entity configuration for Home Assistant.
-    Currently we create sensor and camera entities.
-    """
-
-    async def create_mqtt_config(
-        self, sys_id, device_type, device_friendly_name, device_functions, device_icon
-    ):
+    async def create_mqtt_config(self, sys_id, device_type, device_friendly_name, device_functions):
         """Creates configuration topics within the homeassistant sensor and camera topics.
 
         Args:
@@ -98,16 +118,14 @@ class MqttConnector(Connector):
             device_type (string): Type of the device.
             device_friendly_name (string): Friendly name of the device.
             device_functions (list): List of functions provided by the device.
-            device_icon (string): Icon name
 
         Returns:
             True if thread is alive
         """
 
-        _LOGGER.debug(f"Creating MQTT Config for a {device_type}")
-        _LOGGER.debug(f"  Friendly name {device_friendly_name}")
-        _LOGGER.debug(f"  Functions {device_functions}")
-        _LOGGER.debug(f"  Icon {device_icon}")
+        _LOGGER.debug("Creating MQTT Config for a %s", device_type)
+        _LOGGER.debug("  Friendly name %s", device_friendly_name)
+        _LOGGER.debug("  Functions %s", device_functions)
 
         sys_id_ = sys_id.replace(".", "_")
         device_friendly_name_cap = device_friendly_name
@@ -115,11 +133,13 @@ class MqttConnector(Connector):
 
         for function in device_functions:
             # Generic for all devices one configuration topic for each functionality
-            device_function_cap = function
-            device_function_low = function.lower().replace(" ", "_")
+            device_function_cap = function[SENSOR_NAME]
+            device_function_low = function[SENSOR_NAME].lower().replace(" ", "_")
 
             root_topic = (
-                "homeassistant/sensor/astrolive/"
+                "homeassistant/"
+                + function[SENSOR_TYPE]
+                + "/astrolive/"
                 + device_friendly_name_low
                 + "_"
                 + device_function_low
@@ -128,15 +148,14 @@ class MqttConnector(Connector):
             config = {
                 "name": device_friendly_name_cap + " " + device_function_cap,
                 "state_topic": "astrolive/" + device_type + "/" + sys_id_ + "/state",
-                "unit_of_measurement": "",
-                "icon": device_icon,
-                "availability_topic": "astrolive/"
-                + device_type
-                + "/"
-                + sys_id_
-                + "/lwt",
+                "state_class": function[SENSOR_STATE_CLASS],
+                "device_class": function[SENSOR_DEVICE_CLASS],
+                "icon": function[SENSOR_ICON],
+                "availability_topic": "astrolive/" + device_type + "/" + sys_id_ + "/lwt",
                 "payload_available": "ON",
                 "payload_not_available": "OFF",
+                "payload_on": STATE_ON,
+                "payload_off": STATE_OFF,
                 "unique_id": device_type + "_" + sys_id_ + "_" + device_function_low,
                 "value_template": "{{ value_json." + device_function_low + " }}",
                 "device": {
@@ -145,54 +164,47 @@ class MqttConnector(Connector):
                     "model": device_friendly_name_cap,
                     "manufacturer": MANUFACTURER,
                 },
-                "retain": "OFF",
             }
-            await self._publisher._publish_mqtt(
-                root_topic + "config", json.dumps(config)
-            )
+            if function[SENSOR_UNIT] != "" and function[SENSOR_UNIT] is not None:
+                config["unit_of_measurement"] = function[SENSOR_UNIT]
 
-        _LOGGER.debug(f"Published MQTT Config for a {device_type}")
+            if function[SENSOR_TYPE] == TYPE_TEXT:
+                config["command_topic"] = ("astrolive/" + device_type + "/" + sys_id_ + "/cmd",)
 
-        if (device_type == DEVICE_TYPE_CAMERA) or (
-            device_type == DEVICE_TYPE_CAMERA_FILE
-        ):
+            if function[SENSOR_DEVICE_CLASS] == DEVICE_CLASS_SWITCH:
+                config["command_topic"] = (
+                    "astrolive/" + device_type + "/" + sys_id_ + "/set" + "_" + device_function_low
+                )
+                # Subscribe to command topic of the switch
+                await self._publisher.subsribe_mqtt(
+                    "astrolive/" + device_type + "/" + sys_id_ + "/set" + "_" + device_function_low
+                )
+
+            await self._publisher.publish_mqtt(root_topic + "config", json.dumps(config), qos=0, retain=True)
+
+        _LOGGER.debug("Published MQTT Config for a %s", device_type)
+
+        if device_type in (DEVICE_TYPE_CAMERA, DEVICE_TYPE_CAMERA_FILE):
             # If the device is a camera or camera_file we create a camera entity configuration
-            root_topic = (
-                "homeassistant/camera/astrolive/" + device_friendly_name_low + "/"
-            )
+            root_topic = "homeassistant/camera/astrolive/" + device_friendly_name_low + "/"
             config = {
                 "name": device_friendly_name_cap,
                 "topic": "astrolive/" + device_type + "/" + sys_id_ + "/screen",
-                "availability_topic": "astrolive/"
-                + device_type
-                + "/"
-                + sys_id_
-                + "/lwt",
+                "availability_topic": "astrolive/" + device_type + "/" + sys_id_ + "/lwt",
                 "payload_available": "ON",
                 "payload_not_available": "OFF",
-                "unique_id": device_type
-                + "_"
-                + device_friendly_name_low
-                + "_"
-                + sys_id_,
+                "unique_id": device_type + "_" + device_friendly_name_low + "_" + sys_id_,
                 "device": {
                     "identifiers": [sys_id],
                     "name": device_friendly_name_cap,
                     "model": device_friendly_name_cap,
                     "manufacturer": MANUFACTURER,
                 },
-                "retain": "OFF",
             }
-            await self._publisher._publish_mqtt(
-                root_topic + "config", json.dumps(config)
-            )
-            _LOGGER.debug(f"Published MQTT Camera Config for a {device_type}")
+            await self._publisher.publish_mqtt(root_topic + "config", json.dumps(config), qos=0, retain=True)
+            _LOGGER.debug("Published MQTT Camera Config for a %s", device_type)
 
         return None
-
-    """
-    Image Manipulation
-    """
 
     async def normalize_img(
         self,
@@ -249,9 +261,7 @@ class MqttConnector(Connector):
             transform += AsymmetricPercentileInterval(*minmax_percent)
 
             if minmax_value is not None:
-                _LOGGER.error(
-                    f"Both minmax_percent and minmax_value are set, minmax_value will be ignored."
-                )
+                _LOGGER.error("Both minmax_percent and minmax_value are set, minmax_value will be ignored.")
         elif minmax_value is not None:
             transform += ManualInterval(*minmax_value)
         else:  # Default, scale the entire image range to [0,1]
@@ -289,7 +299,7 @@ class MqttConnector(Connector):
         # initialize the dimensions of the image to be resized and
         # grab the image size
         dim = None
-        (h, w) = image.shape[:2]
+        (image_height, image_width) = image.shape[:2]
 
         # if both the width and height are None, then return the
         # original image
@@ -300,15 +310,15 @@ class MqttConnector(Connector):
         if width is None:
             # calculate the ratio of the height and construct the
             # dimensions
-            r = height / float(h)
-            dim = (int(w * r), height)
+            ratio = height / float(image_height)
+            dim = (int(image_width * ratio), height)
 
         # otherwise, the height is None
         else:
             # calculate the ratio of the width and construct the
             # dimensions
-            r = width / float(w)
-            dim = (width, int(h * r))
+            ratio = width / float(image_width)
+            dim = (width, int(image_height * ratio))
 
         # resize the image
         resized = cv2.resize(image, dim, interpolation=inter)
@@ -318,6 +328,8 @@ class MqttConnector(Connector):
 
 
 class Telescope(MqttConnector):
+    """MQTT Device Telescope"""
+
     async def publish_loop(self, sys_id, device, device_type, interval):
         """Publish the device state in an endless loop
 
@@ -332,17 +344,16 @@ class Telescope(MqttConnector):
         while True:
             try:
                 execution_time = round(time.time() - start, 1)
-                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
-                # await self._publish(sys_id, device, device_type, execution_time)
+                _LOGGER.debug("Execution time for %s %ds", sys_id, execution_time)
                 await self._publish_telescope(sys_id, device, device_type)
                 sleep(interval)
             except KeyboardInterrupt:
                 break
-            except (RequestConnectionError, DeviceResponseError) as de:
+            except (RequestConnectionError, DeviceResponseError):
                 _LOGGER.error("Stopping thread for %s", sys_id)
                 break
-        _LOGGER.warning(f"Thread {sys_id} exits")
-        exit(0)
+        _LOGGER.warning("Thread %s exits", sys_id)
+        sys.exit(0)
 
     async def _publish_telescope(self, sys_id, device, device_type):
         """Publish telescope state
@@ -355,11 +366,11 @@ class Telescope(MqttConnector):
 
         sys_id_ = sys_id.replace(".", "_")
 
-        _LOGGER.debug(f"{sys_id}: Update")
+        _LOGGER.debug("%s: Update", sys_id)
         topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
         try:
             if device.connected():
-                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                await self._publisher.publish_mqtt(topic + "lwt", "ON")
                 state = {
                     "at_home": "on" if device.athome() else "off",
                     "at_park": "on" if device.atpark() else "off",
@@ -370,25 +381,25 @@ class Telescope(MqttConnector):
                     "guiderate_declination": round(device.guideratedeclination(), 3),
                     "right_ascension": round(device.rightascension(), 3),
                     "right_ascension_rate": round(device.rightascensionrate(), 3),
-                    "guiderate_right_ascension": round(
-                        device.guideraterightascension(), 3
-                    ),
+                    "guiderate_right_ascension": round(device.guideraterightascension(), 3),
                     "side_of_pier": device.sideofpier(),
                     "site_elevation": round(device.siteelevation(), 3),
                     "site_latitude": round(device.sitelatitude(), 3),
                     "site_longitude": round(device.sitelongitude(), 3),
                     "slewing": "on" if device.slewing() else "off",
                 }
-                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+                await self._publisher.publish_mqtt(topic + "state", json.dumps(state))
             else:
-                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-        except (RequestConnectionError, DeviceResponseError) as de:
-            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-            _LOGGER.error(f"{sys_id}: Not connected")
-            raise de
+                await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as rcedre:
+            await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error("%s: Not connected", sys_id)
+            raise rcedre
 
 
 class Camera(MqttConnector):
+    """MQTT Device Camera"""
+
     async def publish_loop(self, sys_id, device, device_type, interval):
         """Publish the device state in an endless loop
 
@@ -403,17 +414,16 @@ class Camera(MqttConnector):
         while True:
             try:
                 execution_time = round(time.time() - start, 1)
-                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
-                # await self._publish(sys_id, device, device_type, execution_time)
+                _LOGGER.debug("Execution time for %s %ds", sys_id, execution_time)
                 await self._publish_camera(sys_id, device, device_type)
                 sleep(interval)
             except KeyboardInterrupt:
                 break
-            except (RequestConnectionError, DeviceResponseError) as de:
+            except (RequestConnectionError, DeviceResponseError):
                 _LOGGER.error("Stopping thread for %s", sys_id)
                 break
-        _LOGGER.warning(f"Thread {sys_id} exits")
-        exit(0)
+        _LOGGER.warning("Thread %s exits", sys_id)
+        sys.exit(0)
 
     async def _publish_camera(self, sys_id, device, device_type):
         """Publish camera state and image
@@ -426,11 +436,11 @@ class Camera(MqttConnector):
 
         sys_id_ = sys_id.replace(".", "_")
 
-        _LOGGER.debug(f"{sys_id}: Update")
+        _LOGGER.debug("%s: Update", sys_id)
         topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
         try:
             if device.connected():
-                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                await self._publisher.publish_mqtt(topic + "lwt", "ON")
                 state = {
                     "camera_state": CAMERA_STATES[device.camerastate()],
                     "ccd_temperature": device.ccdtemperature(),
@@ -444,17 +454,13 @@ class Camera(MqttConnector):
 
                 if device.component_options.get("image", False):
                     try:
-                        state["last_exposure_duration"] = (
-                            device.lastexposureduration(),
-                        )
-                        state["last_exposure_start_time"] = (
-                            device.lastexposurestarttime(),
-                        )
+                        state["last_exposure_duration"] = (device.lastexposureduration(),)
+                        state["last_exposure_start_time"] = (device.lastexposurestarttime(),)
                     except AlpacaError:
                         _LOGGER.warning(
-                            f"{sys_id}: Call to LastExposureDuration before the first image has been taken!"
+                            "%s: Call to LastExposureDuration before the first image has been taken!",
+                            sys_id,
                         )
-                        pass
                     except AttributeError:
                         pass
                     except (RequestConnectionError, DeviceResponseError):
@@ -464,19 +470,19 @@ class Camera(MqttConnector):
                         state["percent_completed"] = (device.percentcompleted(),)
                     except AlpacaError:
                         _LOGGER.warning(
-                            f"{sys_id}: Call to LastExposureDuration before the first image has been taken!"
+                            "%s: Call to LastExposureDuration before the first image has been taken!",
+                            sys_id,
                         )
-                        pass
                     except AttributeError:
                         pass
                     except (RequestConnectionError, DeviceResponseError):
                         pass
 
                     if device.imageready():
-                        _LOGGER.info(f"{sys_id}: Reading image")
+                        _LOGGER.info("%s: Reading image", sys_id)
                         image_data = device.imagearray()
 
-                        _LOGGER.debug(f"{sys_id}: Normalizing image")
+                        _LOGGER.debug("%s: Normalizing image", sys_id)
                         normalized = await self.normalize_img(
                             image_data,
                             IMAGE_STRETCH_FUNCTION,
@@ -484,34 +490,30 @@ class Camera(MqttConnector):
                             IMAGE_MINMAX_VALUE,
                             IMAGE_INVERT,
                         )
-                        _LOGGER.debug(
-                            f"{sys_id}: Image dimensions " + str(normalized.shape)
-                        )
+                        _LOGGER.debug("%s: Image dimensions " + str(normalized.shape), sys_id)
 
-                        _LOGGER.debug(f"{sys_id}: Scaling image")
+                        _LOGGER.debug("%s: Scaling image", sys_id)
                         normalized = await self.image_resize(normalized, width=1024)
 
-                        _LOGGER.debug(f"{sys_id}: Encoding image")
+                        _LOGGER.debug("%s: Encoding image", sys_id)
                         normalized_jpg = imencode(".jpg", normalized)[1]
 
-                        _LOGGER.info(f"{sys_id}: Publish image")
+                        _LOGGER.info("%s: Publish image", sys_id)
                         image_bytearray = bytearray(normalized_jpg)
-                        _LOGGER.debug(
-                            f"{sys_id}: Image size {len(image_bytearray)} bytes"
-                        )
-                        await self._publisher._publish_mqtt(
-                            topic + "screen", image_bytearray
-                        )
-                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+                        _LOGGER.debug("%s: Image size {len(image_bytearray)} bytes", sys_id)
+                        await self._publisher.publish_mqtt(topic + "screen", image_bytearray)
+                await self._publisher.publish_mqtt(topic + "state", json.dumps(state))
             else:
-                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-        except (RequestConnectionError, DeviceResponseError) as de:
-            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-            _LOGGER.error(f"{sys_id}: Not connected")
-            raise de
+                await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as rcedre:
+            await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error("%s: Not connected", sys_id)
+            raise rcedre
 
 
 class CameraFile(MqttConnector):
+    """MQTT Device CameraFile"""
+
     async def publish_loop(self, sys_id, device, device_type, interval):
         """Publish the device state in an endless loop
 
@@ -526,18 +528,16 @@ class CameraFile(MqttConnector):
         while True:
             try:
                 execution_time = round(time.time() - start, 1)
-                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
-                await self._publish_camera_file(
-                    sys_id, device, device_type, execution_time
-                )
+                _LOGGER.debug("Execution time for %s %ds", sys_id, execution_time)
+                await self._publish_camera_file(sys_id, device, device_type, execution_time)
                 sleep(interval)
             except KeyboardInterrupt:
                 break
-            except (RequestConnectionError, DeviceResponseError) as de:
+            except (RequestConnectionError, DeviceResponseError):
                 _LOGGER.error("Stopping thread for %s", sys_id)
                 break
-        _LOGGER.warning(f"Thread {sys_id} exits")
-        exit(0)
+        _LOGGER.warning("Thread %s exits", sys_id)
+        sys.exit(0)
 
     """
     FITS Header example
@@ -582,17 +582,17 @@ class CameraFile(MqttConnector):
 
         sys_id_ = sys_id.replace(".", "_")
         monitor_directory = device.component_options.get("monitor", ".")
-        _LOGGER.debug(f"{sys_id}: Update")
+        _LOGGER.debug("%s: Update", sys_id)
 
         latest_file = ""
         try:
             list_of_files = glob.glob(f"{monitor_directory}/**/*.fits", recursive=True)
             latest_file = max(list_of_files, key=os.path.getctime)
-        except ValueError as ve:
-            _LOGGER.warning(f"{sys_id}: No file found")
+        except ValueError:
+            _LOGGER.warning("%s: No file found", sys_id)
             return
 
-        # TODO
+        # TODO:
         # For currently unkown reasons, the first publish doesn't replicate
         # to the broker until create_mqtt_config is run again afterwards.
         # As a workaround for now, we alwas republish for the first 3 minutes
@@ -600,7 +600,7 @@ class CameraFile(MqttConnector):
         if DEVICE_TYPE_CAMERA_FILE in self._store:
             if "last_file" in self._store[DEVICE_TYPE_CAMERA_FILE]:
                 if self._store[DEVICE_TYPE_CAMERA_FILE]["last_file"] == latest_file:
-                    _LOGGER.debug(f"{sys_id}: Image {latest_file} already published")
+                    _LOGGER.debug("%s: Image {latest_file} already published", sys_id)
                 else:
                     self._store[DEVICE_TYPE_CAMERA_FILE] = {"last_file": latest_file}
                     publish = True
@@ -614,7 +614,7 @@ class CameraFile(MqttConnector):
             publish = True
 
         if publish:
-            _LOGGER.info(f"{sys_id}: Reading image {latest_file}")
+            _LOGGER.info("%s: Reading image %s", sys_id, latest_file)
             hdr = None
             image_data = None
             try:
@@ -623,22 +623,21 @@ class CameraFile(MqttConnector):
                     # hdul = fits.open(latest_file)
                     hdr = hdul[0].header
                     image_data = fits.getdata(latest_file, ext=0)
-            except OSError as ose:
+            except OSError:
                 _LOGGER.error(
-                    f"{sys_id}: No SIMPLE card found, this file does not appear to be a valid FITS file"
+                    "%s: No SIMPLE card found, this file does not appear to be a valid FITS file",
+                    sys_id,
                 )
                 return
 
             topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
             try:
-                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                await self._publisher.publish_mqtt(topic + "lwt", "ON")
                 state = {
                     "image_type": hdr.get("IMAGETYP", "n/a"),
                     "exposure_duration": hdr.get("EXPOSURE", "n/a"),
-                    "time_of_observation": datetime.fromisoformat(
-                        hdr.get("DATE-LOC", datetime.utcnow())
-                    )
-                    .replace(microsecond=0)
+                    "time_of_observation": datetime.fromisoformat(hdr.get("DATE-OBS", datetime.utcnow()))
+                    .replace(microsecond=0, tzinfo=timezone.utc)
                     .isoformat(),
                     "x_axis_binning": hdr.get("XBINNING", "n/a"),
                     "y_axis_binning": hdr.get("YBINNING", "n/a"),
@@ -663,9 +662,9 @@ class CameraFile(MqttConnector):
                     "rotation_of_imaged_object": hdr.get("OBJCTROT", "n/a"),
                     "software": hdr.get("SWCREATE", "n/a"),
                 }
-                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+                await self._publisher.publish_mqtt(topic + "state", json.dumps(state))
 
-                _LOGGER.debug(f"{sys_id}: Normalizing image")
+                _LOGGER.debug("%s: Normalizing image", sys_id)
                 normalized = await self.normalize_img(
                     image_data,
                     IMAGE_STRETCH_FUNCTION,
@@ -673,29 +672,31 @@ class CameraFile(MqttConnector):
                     IMAGE_MINMAX_VALUE,
                     IMAGE_INVERT,
                 )
-                _LOGGER.debug(f"{sys_id}: Image dimensions " + str(normalized.shape))
+                _LOGGER.debug("%s: Image dimensions " + str(normalized.shape), sys_id)
 
-                _LOGGER.debug(f"{sys_id}: Scaling image")
+                _LOGGER.debug("%s: Scaling image", sys_id)
                 normalized = await self.image_resize(normalized, width=1024)
 
-                _LOGGER.debug(f"{sys_id}: Encoding image")
+                _LOGGER.debug("%s: Encoding image", sys_id)
                 normalized_jpg = imencode(".jpg", normalized)[1]
 
-                _LOGGER.info(f"{sys_id}: Publish image")
+                _LOGGER.info("%s: Publish image", sys_id)
                 image_bytearray = bytearray(normalized_jpg)
-                _LOGGER.debug(f"{sys_id}: Image size {len(image_bytearray)} bytes")
-                await self._publisher._publish_mqtt(topic + "screen", image_bytearray)
-            except Exception as e:
-                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-                _LOGGER.error(e)
-                raise e
-            except (RequestConnectionError, DeviceResponseError) as de:
-                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-                _LOGGER.error(f"{sys_id}: Not connected")
-                raise de
+                _LOGGER.debug("%s: Image size {len(image_bytearray)} bytes", sys_id)
+                await self._publisher.publish_mqtt(topic + "screen", image_bytearray)
+            except (RequestConnectionError, DeviceResponseError) as rcedre:
+                await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+                _LOGGER.error("%s: Not connected", sys_id)
+                raise rcedre
+            except Exception as exc:
+                await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+                _LOGGER.error(exc)
+                raise exc
 
 
 class Focuser(MqttConnector):
+    """MQTT Device Focuser"""
+
     async def publish_loop(self, sys_id, device, device_type, interval):
         """Publish the device state in an endless loop
 
@@ -710,16 +711,16 @@ class Focuser(MqttConnector):
         while True:
             try:
                 execution_time = round(time.time() - start, 1)
-                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
+                _LOGGER.debug("Execution time for %s %ds", sys_id, execution_time)
                 await self._publish_focuser(sys_id, device, device_type)
                 sleep(interval)
             except KeyboardInterrupt:
                 break
-            except (RequestConnectionError, DeviceResponseError) as de:
+            except (RequestConnectionError, DeviceResponseError):
                 _LOGGER.error("Stopping thread for %s", sys_id)
                 break
-        _LOGGER.warning(f"Thread {sys_id} exits")
-        exit(0)
+        _LOGGER.warning("Thread %s exits", sys_id)
+        sys.exit(0)
 
     async def _publish_focuser(self, sys_id, device, device_type):
         """Publish the focuser state
@@ -732,25 +733,27 @@ class Focuser(MqttConnector):
 
         sys_id_ = sys_id.replace(".", "_")
 
-        _LOGGER.debug(f"{sys_id}: Update")
+        _LOGGER.debug("%s: Update", sys_id)
         topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
         try:
             if device.connected():
-                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                await self._publisher.publish_mqtt(topic + "lwt", "ON")
                 state = {
                     "position": device.position(),
                     "is_moving": "on" if device.ismoving() else "off",
                 }
-                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+                await self._publisher.publish_mqtt(topic + "state", json.dumps(state))
             else:
-                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-        except (RequestConnectionError, DeviceResponseError) as de:
-            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-            _LOGGER.error(f"{sys_id}: Not connected")
-            raise de
+                await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as rcedre:
+            await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error("%s: Not connected", sys_id)
+            raise rcedre
 
 
 class Switch(MqttConnector):
+    """MQTT Device Switch"""
+
     async def publish_loop(self, sys_id, device, device_type, interval):
         """Publish the switch state in an endless loop
 
@@ -765,16 +768,16 @@ class Switch(MqttConnector):
         while True:
             try:
                 execution_time = round(time.time() - start, 1)
-                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
+                _LOGGER.debug("Execution time for %s %ds", sys_id, execution_time)
                 await self._publish_switch(sys_id, device, device_type)
                 sleep(interval)
             except KeyboardInterrupt:
                 break
-            except (RequestConnectionError, DeviceResponseError) as de:
+            except (RequestConnectionError, DeviceResponseError):
                 _LOGGER.error("Stopping thread for %s", sys_id)
                 break
-        _LOGGER.warning(f"Thread {sys_id} exits")
-        exit(0)
+        _LOGGER.warning("Thread %s exits", sys_id)
+        sys.exit(0)
 
     async def _publish_switch(self, sys_id, device, device_type):
         """Publish the device state
@@ -787,19 +790,17 @@ class Switch(MqttConnector):
 
         sys_id_ = sys_id.replace(".", "_")
 
-        _LOGGER.debug(f"{sys_id}: Update")
+        _LOGGER.debug("%s: Update", sys_id)
         topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
         try:
             if device.connected():
-                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                await self._publisher.publish_mqtt(topic + "lwt", "ON")
                 max_switch = device.maxswitch()
                 state = {"max_switch": max_switch}
-                for id in range(0, max_switch):
+                for switch_id in range(0, max_switch):
                     try:
-                        state["switch_" + str(id)] = (
-                            "on" if device.getswitch(id) else "off"
-                        )
-                        state["switch_value_" + str(id)] = device.getswitchvalue(id)
+                        state["switch_" + str(switch_id)] = "on" if device.getswitch(switch_id) else "off"
+                        state["switch_value_" + str(switch_id)] = device.getswitchvalue(switch_id)
                     except AttributeError:  # c is not a Device (so lacks those methods)
                         pass
                     except (
@@ -807,15 +808,18 @@ class Switch(MqttConnector):
                         DeviceResponseError,
                     ):  # connection to telescope failed
                         pass
-                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+                await self._publisher.publish_mqtt(topic + "state", json.dumps(state))
             else:
-                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-        except (RequestConnectionError, DeviceResponseError) as de:
-            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-            _LOGGER.error(f"{sys_id}: Not connected")
-            raise de
+                await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as rcedre:
+            await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error("%s: Not connected", sys_id)
+            raise rcedre
+
 
 class FilterWheel(MqttConnector):
+    """MQTT Device FilterWheel"""
+
     async def publish_loop(self, sys_id, device, device_type, interval):
         """Publish the device state in an endless loop
 
@@ -830,16 +834,16 @@ class FilterWheel(MqttConnector):
         while True:
             try:
                 execution_time = round(time.time() - start, 1)
-                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
+                _LOGGER.debug("Execution time for %s %ds", sys_id, execution_time)
                 await self._publish_filterwheel(sys_id, device, device_type)
                 sleep(interval)
             except KeyboardInterrupt:
                 break
-            except (RequestConnectionError, DeviceResponseError) as de:
+            except (RequestConnectionError, DeviceResponseError):
                 _LOGGER.error("Stopping thread for %s", sys_id)
                 break
-        _LOGGER.warning(f"Thread {sys_id} exits")
-        exit(0)
+        _LOGGER.warning("Thread %s exits", sys_id)
+        sys.exit(0)
 
     async def _publish_filterwheel(self, sys_id, device, device_type):
         """Publish the filterwheel state
@@ -852,25 +856,28 @@ class FilterWheel(MqttConnector):
 
         sys_id_ = sys_id.replace(".", "_")
 
-        _LOGGER.debug(f"{sys_id}: Update")
+        _LOGGER.debug("%s: Update", sys_id)
         topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
         try:
             if device.connected():
-                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                await self._publisher.publish_mqtt(topic + "lwt", "ON")
                 state = {
                     "position": device.position(),
                     "names": device.names(),
                     "current": device.names()[device.position()],
                 }
-                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+                await self._publisher.publish_mqtt(topic + "state", json.dumps(state))
             else:
-                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-        except (RequestConnectionError, DeviceResponseError) as de:
-            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-            _LOGGER.error(f"{sys_id}: Not connected")
-            raise de
+                await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as rcedre:
+            await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error("%s: Not connected", sys_id)
+            raise rcedre
+
 
 class Dome(MqttConnector):
+    """MQTT Device Dome"""
+
     async def publish_loop(self, sys_id, device, device_type, interval):
         """Publish the device state in an endless loop
 
@@ -885,16 +892,16 @@ class Dome(MqttConnector):
         while True:
             try:
                 execution_time = round(time.time() - start, 1)
-                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
+                _LOGGER.debug("Execution time for %s %ds", sys_id, execution_time)
                 await self._publish_dome(sys_id, device, device_type)
                 sleep(interval)
             except KeyboardInterrupt:
                 break
-            except (RequestConnectionError, DeviceResponseError) as de:
+            except (RequestConnectionError, DeviceResponseError):
                 _LOGGER.error("Stopping thread for %s", sys_id)
                 break
-        _LOGGER.warning(f"Thread {sys_id} exits")
-        exit(0)
+        _LOGGER.warning("Thread %s exits", sys_id)
+        sys.exit(0)
 
     async def _publish_dome(self, sys_id, device, device_type):
         """Publish the dome state
@@ -907,11 +914,11 @@ class Dome(MqttConnector):
 
         sys_id_ = sys_id.replace(".", "_")
 
-        _LOGGER.debug(f"{sys_id}: Update")
+        _LOGGER.debug("%s: Update", sys_id)
         topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
         try:
             if device.connected():
-                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                await self._publisher.publish_mqtt(topic + "lwt", "ON")
                 state = {
                     "altitude": device.altitude(),
                     "athome": device.athome(),
@@ -919,15 +926,18 @@ class Dome(MqttConnector):
                     "azimuth": device.azimuth(),
                     "shutterstatus": device.shutterstatus(),
                 }
-                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+                await self._publisher.publish_mqtt(topic + "state", json.dumps(state))
             else:
-                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-        except (RequestConnectionError, DeviceResponseError) as de:
-            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-            _LOGGER.error(f"{sys_id}: Not connected")
-            raise de
+                await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as rcedre:
+            await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error("%s: Not connected", sys_id)
+            raise rcedre
+
 
 class Rotator(MqttConnector):
+    """MQTT Device Rotator"""
+
     async def publish_loop(self, sys_id, device, device_type, interval):
         """Publish the device state in an endless loop
 
@@ -942,16 +952,16 @@ class Rotator(MqttConnector):
         while True:
             try:
                 execution_time = round(time.time() - start, 1)
-                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
+                _LOGGER.debug("Execution time for %s %ds", sys_id, execution_time)
                 await self._publish_rotator(sys_id, device, device_type)
                 sleep(interval)
             except KeyboardInterrupt:
                 break
-            except (RequestConnectionError, DeviceResponseError) as de:
+            except (RequestConnectionError, DeviceResponseError):
                 _LOGGER.error("Stopping thread for %s", sys_id)
                 break
-        _LOGGER.warning(f"Thread {sys_id} exits")
-        exit(0)
+        _LOGGER.warning("Thread %s exits", sys_id)
+        sys.exit(0)
 
     async def _publish_rotator(self, sys_id, device, device_type):
         """Publish the rotator state
@@ -964,24 +974,27 @@ class Rotator(MqttConnector):
 
         sys_id_ = sys_id.replace(".", "_")
 
-        _LOGGER.debug(f"{sys_id}: Update")
+        _LOGGER.debug("%s: Update", sys_id)
         topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
         try:
             if device.connected():
-                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                await self._publisher.publish_mqtt(topic + "lwt", "ON")
                 state = {
                     "mechanicalposition": device.mechanicalposition(),
                     "position": device.position(),
                 }
-                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+                await self._publisher.publish_mqtt(topic + "state", json.dumps(state))
             else:
-                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-        except (RequestConnectionError, DeviceResponseError) as de:
-            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-            _LOGGER.error(f"{sys_id}: Not connected")
-            raise de
+                await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as rcedre:
+            await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error("%s: Not connected", sys_id)
+            raise rcedre
+
 
 class SafetyMonitor(MqttConnector):
+    """MQTT Device SafetyMonitor"""
+
     async def publish_loop(self, sys_id, device, device_type, interval):
         """Publish the device state in an endless loop
 
@@ -996,16 +1009,16 @@ class SafetyMonitor(MqttConnector):
         while True:
             try:
                 execution_time = round(time.time() - start, 1)
-                _LOGGER.debug(f"Execution time for {sys_id} {execution_time}s")
+                _LOGGER.debug("Execution time for %s %ds", sys_id, execution_time)
                 await self._publish_safetymonitor(sys_id, device, device_type)
                 sleep(interval)
             except KeyboardInterrupt:
                 break
-            except (RequestConnectionError, DeviceResponseError) as de:
+            except (RequestConnectionError, DeviceResponseError):
                 _LOGGER.error("Stopping thread for %s", sys_id)
                 break
-        _LOGGER.warning(f"Thread {sys_id} exits")
-        exit(0)
+        _LOGGER.warning("Thread %s exits", sys_id)
+        sys.exit(0)
 
     async def _publish_safetymonitor(self, sys_id, device, device_type):
         """Publish the safetymonitor state
@@ -1018,21 +1031,22 @@ class SafetyMonitor(MqttConnector):
 
         sys_id_ = sys_id.replace(".", "_")
 
-        _LOGGER.debug(f"{sys_id}: Update")
+        _LOGGER.debug("%s: Update", sys_id)
         topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
         try:
             if device.connected():
-                await self._publisher._publish_mqtt(topic + "lwt", "ON")
+                await self._publisher.publish_mqtt(topic + "lwt", "ON")
                 state = {
                     "issafe": device.issafe(),
                 }
-                await self._publisher._publish_mqtt(topic + "state", json.dumps(state))
+                await self._publisher.publish_mqtt(topic + "state", json.dumps(state))
             else:
-                await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-        except (RequestConnectionError, DeviceResponseError) as de:
-            await self._publisher._publish_mqtt(topic + "lwt", "OFF")
-            _LOGGER.error(f"{sys_id}: Not connected")
-            raise de
+                await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+        except (RequestConnectionError, DeviceResponseError) as rcedre:
+            await self._publisher.publish_mqtt(topic + "lwt", "OFF")
+            _LOGGER.error("%s: Not connected", sys_id)
+            raise rcedre
+
 
 _connector_classes = {
     "telescope": Telescope,
@@ -1043,5 +1057,5 @@ _connector_classes = {
     "filterwheel": FilterWheel,
     "dome": Dome,
     "safetymonitor": SafetyMonitor,
-    "rotator": Rotator
+    "rotator": Rotator,
 }

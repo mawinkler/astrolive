@@ -18,11 +18,11 @@ cards:
     type: grid
     cards:
       - type: custom:mushroom-entity-card
-        entity: sensor.esprit_120ed_altitude
+        entity: sensor.astrolive_esprit_120ed_altitude
         name: Altitude
         icon_type: none
       - type: custom:mushroom-entity-card
-        entity: sensor.esprit_120ed_azimuth
+        entity: sensor.astrolive_esprit_120ed_azimuth
         name: Azimuth
         icon_type: none
       - align_state: center
@@ -30,7 +30,7 @@ cards:
         line_width: 2
         font_size: 20
         entities:
-          - entity: sensor.esprit_120ed_altitude
+          - entity: sensor.astrolive_esprit_120ed_altitude
             color: white
         hours_to_show: 1
         points_per_hour: 240
@@ -46,7 +46,7 @@ cards:
         line_width: 2
         font_size: 20
         entities:
-          - entity: sensor.esprit_120ed_azimuth
+          - entity: sensor.astrolive_esprit_120ed_azimuth
             color: white
         hours_to_show: 1
         points_per_hour: 240
@@ -58,11 +58,11 @@ cards:
           state: false
         type: custom:mini-graph-card
       - type: custom:mushroom-entity-card
-        entity: sensor.esprit_120ed_right_ascension
+        entity: sensor.astrolive_esprit_120ed_right_ascension
         name: Right ascension
         icon_type: none
       - type: custom:mushroom-entity-card
-        entity: sensor.esprit_120ed_declination
+        entity: sensor.astrolive_esprit_120ed_declination
         name: Declination
         icon_type: none
       - align_state: center
@@ -70,7 +70,7 @@ cards:
         line_width: 2
         font_size: 20
         entities:
-          - entity: sensor.esprit_120ed_right_ascension
+          - entity: sensor.astrolive_esprit_120ed_right_ascension
             color: white
         hours_to_show: 1
         points_per_hour: 240
@@ -86,7 +86,7 @@ cards:
         line_width: 2
         font_size: 20
         entities:
-          - entity: sensor.esprit_120ed_declination
+          - entity: sensor.astrolive_esprit_120ed_declination
             color: white
         hours_to_show: 1
         points_per_hour: 240
@@ -97,9 +97,19 @@ cards:
           labels: true
           state: false
         type: custom:mini-graph-card
+  - square: false
+    columns: 2
+    type: grid
+    cards:
       - type: custom:mushroom-entity-card
-        entity: sensor.esprit_120ed_at_park
+        entity: binary_sensor.astrolive_esprit_120ed_slewing
+        name: Slewing
+      - type: custom:mushroom-entity-card
+        entity: binary_sensor.astrolive_esprit_120ed_at_park
         name: At Park
       - type: custom:mushroom-entity-card
-        entity: sensor.esprit_120ed_at_home
+        entity: binary_sensor.astrolive_esprit_120ed_at_home
         name: At Home
+      - type: custom:mushroom-entity-card
+        entity: sensor.astrolive_esprit_120ed_side_of_pier
+        name: Side of pier

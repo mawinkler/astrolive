@@ -1,13 +1,22 @@
-FROM python:3.10.0-slim-bullseye
+FROM python:3.10.0-slim-bullseye AS compile-image
 
-RUN mkdir -p /usr/src/app/astrolive
+WORKDIR /app
 
-ADD run.py /usr/src/app
-ADD requirements.txt /usr/src/app
-ADD astrolive /usr/src/app/astrolive
+COPY requirements.txt .
 
-WORKDIR /usr/src/app
+RUN pip3 install --no-cache-dir -r requirements.txt --user && \
+    pip list
 
-RUN pip3 install --no-cache-dir -r requirements.txt
+FROM python:3.10.0-slim-bullseye AS runtime-image
 
-CMD ["python", "./run.py"]
+COPY --from=compile-image /root/.local /root/.local
+COPY --from=compile-image /etc/ssl /etc/ssl
+
+WORKDIR /app
+
+COPY run.py .
+COPY astrolive astrolive
+
+ENV PATH=/root/local/bin:$PATH
+
+ENTRYPOINT ["python", "/app/run.py"]

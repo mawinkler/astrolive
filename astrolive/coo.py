@@ -1,8 +1,11 @@
+"""Convert coordinates from string to Angle"""
 from astropy import units as u
 from astropy.coordinates import Angle
 
 
 def check_equatorial_coordinates(ra, dec):
+    """Convert equatorial coordinates"""
+
     if isinstance(ra, str):
         ra = Angle(ra, unit=u.hourangle).deg
     if isinstance(dec, str):
@@ -11,6 +14,8 @@ def check_equatorial_coordinates(ra, dec):
 
 
 def check_horizontal_coordinates(az, alt):
+    """Convert horizonal coordinates"""
+
     if isinstance(az, str):
         az = Angle(az, unit=u.deg).deg
     if isinstance(alt, str):

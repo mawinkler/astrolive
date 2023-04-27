@@ -5,13 +5,17 @@ import queue
 import random
 import ssl
 import string
-from doctest import ELLIPSIS_MARKER
 from time import sleep
 from typing import Callable, Iterable, Tuple
 
 import paho.mqtt.client as mqtt
 
 from .observatory import Component
+
+from .const import (
+    STATE_ON,
+    STATE_OFF,
+)
 
 _LOGGER = logging.getLogger(__name__)
 logging.getLogger("mqtt").setLevel(logging.DEBUG)
@@ -27,15 +31,21 @@ class Connector:
         return connector
 
     def on_log(self, client, userdata, level, buf):
-        _LOGGER.debug(f"{buf}")
+        """MQTT logging"""
+
+        _LOGGER.debug("%s", buf)
 
     def on_connect(self, client, userdata, flags, rc):
+        """Connected to MQTT"""
+
         client.publish(
             "astrolive/lwt",
             "ON",
         )
 
     def on_disconnect(self, client, userdata, flags, rc):
+        """Disconnecting from MQTT"""
+
         client.publish(
             "astrolive/lwt",
             "OFF",
@@ -43,18 +53,22 @@ class Connector:
 
     def get(self, component: "Component", variable: str, **data):
         """Not implemented"""
+
         raise NotImplementedError
 
     def put(self, component: "Component", variable: str, **data):
         """Not implemented"""
+
         raise NotImplementedError
 
     def call(self, component: "Component", function: str, **data):
         """Not implemented"""
+
         raise NotImplementedError
 
     def subscribe(self, variables: Iterable[Tuple[str, str]], callback: Callable):
         """Not implemented"""
+
         raise NotImplementedError
 
 
@@ -62,19 +76,13 @@ class MqttHandler(Connector):
     """Specialized MQTT Connector"""
 
     def __init__(self, *args, **kwargs) -> None:
-
         options = args[0]
         self._publisher = kwargs["publisher"]
         self._client = None
-        unique_id = "".join(
-            random.SystemRandom().choice(string.ascii_uppercase + string.digits)
-            for _ in range(12)
-        )
+        unique_id = "".join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(12))
         if self._publisher is None:
             proto = mqtt.MQTTv311
-            self._client = mqtt.Client(
-                f"{options['mqtt']['client']}-{unique_id}", proto
-            )
+            self._client = mqtt.Client(f"{options['mqtt']['client']}-{unique_id}", proto)
             self._client.on_message = self.on_message
             self._client.on_log = self.on_log
             self._client.on_connect = self.on_connect
@@ -90,16 +98,16 @@ class MqttHandler(Connector):
 
             if options["mqtt"]["username"] != "":
                 _LOGGER.info("MQTT Connector using username password")
-                self._client.username_pw_set(
-                    options["mqtt"]["username"], options["mqtt"]["password"]
-                )
+                self._client.username_pw_set(options["mqtt"]["username"], options["mqtt"]["password"])
 
             self._client.connect(options["mqtt"]["broker"], options["mqtt"]["port"])
             self._client.loop_start()
             self._client.subscribe("astrolive/command")
 
             _LOGGER.info(
-                f"MQTT Connector created, ClientId={options['mqtt']['client']}-{unique_id}"
+                "MQTT Connector created, ClientId=%s-%s",
+                options["mqtt"]["client"],
+                unique_id,
             )
         else:
             _LOGGER.info("MQTT Connector already exists")
@@ -109,15 +117,15 @@ class MqttHandler(Connector):
 
         super().__init__()
 
-    def connect(*args, **kwargs):
+    def connect(self, *args, **kwargs):
         """Connect"""
-
-        pass
 
     def configure_components(self):
         """Configure Components"""
 
-        pass
+    def on_command(self, client, userdata, command):
+        """If implemented, called when a command has been received on a topic
+        that the client subscribes to."""
 
     # define callbacks
     def on_message(self, client, userdata, message):
@@ -125,57 +133,70 @@ class MqttHandler(Connector):
 
         fail_command = False
         # Catch JSON decode errors here
-        try:
-            command = json.loads(message.payload.decode("utf-8"))
-        except json.decoder.JSONDecodeError as de:
-            fail_command = True
-            _LOGGER.error(message.payload.decode("utf-8"))
-            _LOGGER.error(f"{de.msg}")
-            return None
+        payload = message.payload.decode("utf-8")
+        topic = message.topic
+        command = {}
+        if payload in (STATE_ON, STATE_OFF):
+            # Are we switching a switch?
+            if "astrolive/switch/" in topic:
+                _LOGGER.info("On/Off command for a switch")
+                # dissecting astrolive/switch/obs_telescope_switch/set_switch_X
+                command["component"] = topic.split("/")[2].replace("_", ".")
+                command["id"] = topic.split("/")[3].split("_")[-1]
+                command["command"] = payload
+        else:
+            # Any other command
+            try:
+                command = json.loads(message.payload.decode("utf-8"))
+            except json.decoder.JSONDecodeError as jsonde:
+                fail_command = True
+                _LOGGER.error(message.payload.decode("utf-8"))
+                _LOGGER.error("%s", jsonde.msg)
+                # return None
         _LOGGER.debug(message.payload.decode("utf-8"))
 
         # Test for keys
-        if not "component" in command:
+        if "component" not in command:
             fail_command = True
-            _LOGGER.error(f"No component in command set")
-        if not "command" in command:
+            _LOGGER.error("No component in command set")
+        if "command" not in command:
             fail_command = True
-            _LOGGER.error(f"No command in command set")
+            _LOGGER.error("No command in command set")
         if not fail_command:
-            self.on_command(self, userdata, message)
+            self.on_command(self, userdata, command)
 
-    @property
-    def on_command(self):
-        """If implemented, called when a command has been received on a topic
-        that the client subscribes to.
+    # @property
+    # def on_command(self):
+    #     """If implemented, called when a command has been received on a topic
+    #     that the client subscribes to.
 
-        This callback will be called for every command received. Use
-        message_callback_add() to define multiple callbacks that will be called
-        for specific topic filters."""
+    #     This callback will be called for every command received. Use
+    #     message_callback_add() to define multiple callbacks that will be called
+    #     for specific topic filters."""
 
-        return self._on_command
+    #     return self._on_command
 
-    @on_command.setter
-    def on_command(self, func):
-        """Define the command received callback implementation.
+    # @on_command.setter
+    # def on_command(self, func):
+    #     """Define the command received callback implementation.
 
-        Expected signature is:
-            on_message_callback(client, userdata, message)
+    #     Expected signature is:
+    #         on_message_callback(client, userdata, message)
 
-        client:     the client instance for this callback
-        userdata:   the private user data as set in Client() or userdata_set()
-        message:    an instance of MQTTMessage.
-                    This is a class with members topic, payload, qos, retain.
+    #     client:     the client instance for this callback
+    #     userdata:   the private user data as set in Client() or userdata_set()
+    #     message:    an instance of MQTTMessage.
+    #                 This is a class with members topic, payload, qos, retain.
 
-        Decorator: @client.message_callback() (```client``` is the name of the
-            instance which this callback is being attached to)
+    #     Decorator: @client.message_callback() (```client``` is the name of the
+    #         instance which this callback is being attached to)
 
-        """
+    #     """
 
-        # with self._callback_mutex:
-        self._on_command = func
+    #     # with self._callback_mutex:
+    #     self._on_command = func
 
-    async def _publish_mqtt(self, topic, message):
+    async def publish_mqtt(self, topic, message, qos=0, retain=False):
         """Queue a MQTT message
 
         Args:
@@ -183,23 +204,38 @@ class MqttHandler(Connector):
             message (string): The message.
         """
 
-        self._messages.put([topic, message])
+        self._messages.put([topic, message, qos, retain])
+
+    async def subsribe_mqtt(self, topic):
+        """Subscribe to a MQTT topic
+
+        Args:
+            topic (string): Topic of the message.
+        """
+
+        self._client.subscribe(topic)
 
     async def looper(self):
         """Send a MQTT message one by one"""
 
         while True:
             if self._client.is_connected is False:
-                _LOGGER.warning(f"Reconnecting to MQTT Broker")
+                _LOGGER.warning("Reconnecting to MQTT Broker")
                 self._client.reconnect()
 
             # if len(self._messages) > 0:
             if not self._messages.empty():
                 message = self._messages.get()
                 if message:
-                    response = self._client.publish(message[0], message[1])
+                    response = self._client.publish(message[0], message[1], message[2], message[3])
+                    _LOGGER.debug(
+                        "MQTT publish ratain: %s, %s, %s",
+                        message[0],
+                        message[2],
+                        message[3],
+                    )
                     if response[0]:
-                        _LOGGER.warning(f"MQTT failure: {response[0]}")
+                        _LOGGER.warning("MQTT failure: %s", response[0])
             sleep(0.1)
 
 
@@ -207,19 +243,13 @@ class MqttListener(Connector):
     """Specialized MQTT Connector"""
 
     def __init__(self, *args, **kwargs) -> None:
-
         options = args[0]
         self._listener = kwargs["listener"]
         self._client = None
-        unique_id = "".join(
-            random.SystemRandom().choice(string.ascii_uppercase + string.digits)
-            for _ in range(12)
-        )
+        unique_id = "".join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(12))
         if self._listener is None:
             proto = mqtt.MQTTv311
-            self._client = mqtt.Client(
-                f"{options['mqtt']['client']}-{unique_id}", proto
-            )
+            self._client = mqtt.Client(f"{options['mqtt']['client']}-{unique_id}", proto)
             self._client.on_message = self.on_message
             self._client.on_log = self.on_log
             self._client.on_connect = self.on_connect
@@ -235,16 +265,16 @@ class MqttListener(Connector):
 
             if options["mqtt"]["username"] != "":
                 _LOGGER.info("MQTT Connector using username password")
-                self._client.username_pw_set(
-                    options["mqtt"]["username"], options["mqtt"]["password"]
-                )
+                self._client.username_pw_set(options["mqtt"]["username"], options["mqtt"]["password"])
 
             self._client.connect(options["mqtt"]["broker"], options["mqtt"]["port"])
-            _LOGGER.info(f"Listener loop_start")
+            _LOGGER.info("Listener loop_start")
             self._client.loop_start()  # start the loop
             self._client.subscribe("astrolive/command")
             _LOGGER.info(
-                f"MQTT Connector created, ClientId={options['mqtt']['client']}-{unique_id}"
+                "MQTT Connector created, ClientId=%s-%s",
+                options["mqtt"]["client"],
+                unique_id,
             )
         else:
             _LOGGER.info("MQTT Connector already exists")
@@ -253,17 +283,16 @@ class MqttListener(Connector):
 
         super().__init__()
 
-    def connect(*args, **kwargs):
+    def connect(self, *args, **kwargs):
         """Connect"""
-
-        pass
 
     def configure_components(self):
         """Configure Components"""
 
-        pass
+    def on_message(self, client, userdata, message):
+        """Called when we receive a command to process"""
 
-    async def _publish_mqtt(self, topic, message):
+    async def publish_mqtt(self, topic, message):
         """Queue a MQTT message
 
         Args:
@@ -278,16 +307,16 @@ class MqttListener(Connector):
 
         while True:
             if self._client.is_connected is False:
-                _LOGGER.warning(f"Reconnecting to MQTT Broker")
+                _LOGGER.warning("Reconnecting to MQTT Broker")
                 self._client.reconnect()
 
             if self._messages:
-                _LOGGER.debug(f"Queue length: {len(self._messages)}")
+                _LOGGER.debug("Queue length: %d", len(self._messages))
                 message = self._messages.pop(0)
                 if message:
                     response = self._client.publish(message[0], message[1])
                     if response[0]:
-                        _LOGGER.warning(f"MQTT failure: {response[0]}")
+                        _LOGGER.warning("MQTT failure: %s", response[0])
             sleep(0.1)
 
 

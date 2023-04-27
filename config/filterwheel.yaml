@@ -14,11 +14,11 @@ cards:
         - padding-bottom: 4px
     type: custom:button-card
   - square: false
-    columns: 2
+    columns: 1
     type: grid
     cards:
       - type: custom:mushroom-entity-card
-        entity: sensor.qhy_cfw3m_us_current
+        entity: sensor.astrolive_qhy_cfw3m_us_current
         name: Current Filter
         icon_type: none
         fill_container: true

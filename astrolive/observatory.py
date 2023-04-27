@@ -23,9 +23,7 @@ class Component:
     def _setup(self, options: dict):
         self.component_options: MutableMapping = options.copy()
         try:
-            self._connector = Connector.create_connector(
-                self.component_options["protocol"]
-            )
+            self._connector = Connector.create_connector(self.component_options["protocol"])
         except KeyError:
             pass
         try:
@@ -33,9 +31,7 @@ class Component:
         except KeyError:
             child_options = {}
         for cid, op in child_options.items():
-            child = self._create_component(
-                kind=op["kind"], sys_id=self.sys_id + "." + cid, parent=self
-            )
+            child = self._create_component(kind=op["kind"], sys_id=self.sys_id + "." + cid, parent=self)
             self.children[cid] = child
             setattr(self, cid, child)  # allow easy navigation: `parent.child`
             child._setup(op)
@@ -97,9 +93,7 @@ class Component:
             return self
 
     @classmethod
-    def _create_component(
-        cls, kind: str, sys_id: str, parent: "Component"
-    ) -> "Component":
+    def _create_component(cls, kind: str, sys_id: str, parent: "Component") -> "Component":
         return _component_classes[kind](sys_id=sys_id, parent=parent)
 
     # def __getattribute__(self, name: str) -> Any:
@@ -1229,9 +1223,7 @@ class Camera(Device):
         #     Device._client_trans_id += 1
         # finally:
         #     Device._ctid_lock.release()
-        response = requests.get(
-            "%s/%s" % (self.base_url, attribute), params=pdata, headers=hdrs
-        )
+        response = requests.get("%s/%s" % (self.base_url, attribute), params=pdata, headers=hdrs)
 
         if response.status_code not in range(200, 204):  # HTTP level errors
             raise Exception(
@@ -1287,9 +1279,7 @@ class Camera(Device):
             #
             a = array.array(tcode)
             data_start = int.from_bytes(b[16:20], m)
-            a.frombytes(
-                b[data_start:]
-            )  # 'h', 'H', 16-bit ints 2 bytes get turned into Python 32-bit ints
+            a.frombytes(b[data_start:])  # 'h', 'H', 16-bit ints 2 bytes get turned into Python 32-bit ints
             #
             # Convert to common Python nested list "array".
             #
@@ -1386,6 +1376,7 @@ class FilterWheel(Device):
             Position (int): Absolute position
         """
         self._put("position", Position=Position)
+
 
 class Telescope(Device):
     """Telescope specific methods."""
@@ -1685,9 +1676,7 @@ class Telescope(Device):
         """
         if GuideRateRightAscension is None:
             return self._get("guideraterightascension")
-        self._put(
-            "guideraterightascension", GuideRateRightAscension=GuideRateRightAscension
-        )
+        self._put("guideraterightascension", GuideRateRightAscension=GuideRateRightAscension)
 
     def ispulseguiding(self):
         """Indicate whether the telescope is currently executing a PulseGuide command.
@@ -1735,7 +1724,8 @@ class Telescope(Device):
 
         """
         if SideOfPier is None:
-            return self._get("sideofpier")
+            # return self._get("sideofpier")
+            return "West" if self._get("sideofpier") else "East"
         self._put("sideofpier", SideOfPier=SideOfPier)
 
     def siderealtime(self):
@@ -1833,9 +1823,7 @@ class Telescope(Device):
         _, TargetDeclination = check_equatorial_coordinates(0.0, TargetDeclination)
         self._put("targetdeclination", TargetDeclination=TargetDeclination)
 
-    def targetrightascension(
-        self, TargetRightAscension: Optional[Union[float, str]] = None
-    ):
+    def targetrightascension(self, TargetRightAscension: Optional[Union[float, str]] = None):
         """Set or return the current target right ascension.
 
         Args:
@@ -1849,9 +1837,7 @@ class Telescope(Device):
 
         if TargetRightAscension is None:
             return self._get("targetrightascension") / 24 * 360  # hourangle -> deg
-        TargetRightAscension, _ = check_equatorial_coordinates(
-            TargetRightAscension, 0.0
-        )
+        TargetRightAscension, _ = check_equatorial_coordinates(TargetRightAscension, 0.0)
         TargetRightAscension = TargetRightAscension / 360 * 24  # deg -> hour angle
         self._put("targetrightascension", TargetRightAscension=TargetRightAscension)
 
@@ -1939,9 +1925,7 @@ class Telescope(Device):
         """
         return self._get("canmoveaxis", Axis=Axis)
 
-    def destinationsideofpier(
-        self, RightAscension: Union[float, str], Declination: Union[float, str]
-    ):
+    def destinationsideofpier(self, RightAscension: Union[float, str], Declination: Union[float, str]):
         """Predict the pointing state after a German equatorial mount slews to given coordinates.
 
         Args:
@@ -1955,9 +1939,7 @@ class Telescope(Device):
 
         """
 
-        RightAscension, Declination = check_equatorial_coordinates(
-            RightAscension, Declination
-        )
+        RightAscension, Declination = check_equatorial_coordinates(RightAscension, Declination)
         RightAscension = RightAscension / 360 * 24  # deg -> hour angle
 
         return self._get(
@@ -2026,9 +2008,7 @@ class Telescope(Device):
         Azimuth, Altitude = check_horizontal_coordinates(Azimuth, Altitude)
         self._put("slewtoaltazasync", Azimuth=Azimuth, Altitude=Altitude)
 
-    def slewtocoordinates(
-        self, RightAscension: Union[float, str], Declination: Union[float, str]
-    ):
+    def slewtocoordinates(self, RightAscension: Union[float, str], Declination: Union[float, str]):
         """Slew synchronously to the given equatorial coordinates.
 
         Args:
@@ -2036,17 +2016,11 @@ class Telescope(Device):
             Declination (float or str): Declination coordinate (degrees).
 
         """
-        RightAscension, Declination = check_equatorial_coordinates(
-            RightAscension, Declination
-        )
+        RightAscension, Declination = check_equatorial_coordinates(RightAscension, Declination)
         RightAscension = RightAscension / 360 * 24  # deg -> hour angle
-        self._put(
-            "slewtocoordinates", RightAscension=RightAscension, Declination=Declination
-        )
+        self._put("slewtocoordinates", RightAscension=RightAscension, Declination=Declination)
 
-    def slewtocoordinatesasync(
-        self, RightAscension: Union[float, str], Declination: Union[float, str]
-    ):
+    def slewtocoordinatesasync(self, RightAscension: Union[float, str], Declination: Union[float, str]):
         """Slew asynchronously to the given equatorial coordinates.
 
         Args:
@@ -2054,9 +2028,7 @@ class Telescope(Device):
             Declination (float or str): Declination coordinate (degrees).
 
         """
-        RightAscension, Declination = check_equatorial_coordinates(
-            RightAscension, Declination
-        )
+        RightAscension, Declination = check_equatorial_coordinates(RightAscension, Declination)
         RightAscension = RightAscension / 360 * 24  # deg -> hour angle
         self._put(
             "slewtocoordinatesasync",
@@ -2084,9 +2056,7 @@ class Telescope(Device):
         Azimuth, Altitude = check_horizontal_coordinates(Azimuth, Altitude)
         self._put("synctoaltaz", Azimuth=Azimuth, Altitude=Altitude)
 
-    def synctocoordinates(
-        self, RightAscension: Union[float, str], Declination: Union[float, str]
-    ):
+    def synctocoordinates(self, RightAscension: Union[float, str], Declination: Union[float, str]):
         """Sync to the given equatorial coordinates.
 
         Args:
@@ -2094,13 +2064,9 @@ class Telescope(Device):
             Declination (float or str): Declination coordinate (degrees).
 
         """
-        RightAscension, Declination = check_equatorial_coordinates(
-            RightAscension, Declination
-        )
+        RightAscension, Declination = check_equatorial_coordinates(RightAscension, Declination)
         RightAscension = RightAscension / 360 * 24  # deg -> hour angle
-        self._put(
-            "synctocoordinates", RightAscension=RightAscension, Declination=Declination
-        )
+        self._put("synctocoordinates", RightAscension=RightAscension, Declination=Declination)
 
     def synctotarget(self):
         """Sync to the TargetRightAscension and TargetDeclination coordinates."""

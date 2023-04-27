@@ -4,23 +4,17 @@
 class AstroLiveError(Exception):
     """Define a base error."""
 
-    pass
-
 
 class RequestError(AstroLiveError):
     """Define an error related to invalid requests."""
-
-    pass
 
 
 class ResultError(AstroLiveError):
     """Define an error related to the result returned from a request."""
 
-    pass
-
 
 class DeviceResponseError(Exception):
-    pass
+    """Device Response Error"""
 
 
 class AlpacaError(DeviceResponseError):
@@ -61,12 +55,12 @@ class AlpacaHttpError(DeviceResponseError):
 
 
 class AlpacaHttp400Error(AlpacaHttpError):
-    pass
+    """Alpaca HTTP 400 Error"""
 
 
 class AlpacaHttp500Error(AlpacaHttpError):
-    pass
+    """Alpaca HTTP 500 Error"""
 
 
 class RequestConnectionError(IOError):
-    pass
+    """Request Connection Error"""

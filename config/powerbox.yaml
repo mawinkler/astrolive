@@ -18,7 +18,7 @@ cards:
     type: grid
     cards:
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_value_10
+        entity: sensor.astrolive_pegasusastro_upbv2_switch_value_10
         secondary_info: state
         tap_action:
           action: none
@@ -34,7 +34,7 @@ cards:
         line_width: 2
         font_size: 20
         entities:
-          - entity: sensor.pegasusastro_upbv2_switch_value_10
+          - entity: sensor.astrolive_pegasusastro_upbv2_switch_value_10
             color: white
         hours_to_show: 2
         points_per_hour: 60
@@ -46,7 +46,7 @@ cards:
           state: false
         type: custom:mini-graph-card
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_value_13
+        entity: sensor.astrolive_pegasusastro_upbv2_switch_value_13
         secondary_info: state
         tap_action:
           action: none
@@ -62,7 +62,7 @@ cards:
         line_width: 2
         font_size: 20
         entities:
-          - entity: sensor.pegasusastro_upbv2_switch_value_13
+          - entity: sensor.astrolive_pegasusastro_upbv2_switch_value_13
             color: white
         hours_to_show: 2
         points_per_hour: 60
@@ -74,7 +74,7 @@ cards:
           state: false
         type: custom:mini-graph-card
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_value_11
+        entity: sensor.astrolive_pegasusastro_upbv2_switch_value_11
         secondary_info: state
         tap_action:
           action: none
@@ -90,7 +90,7 @@ cards:
         line_width: 2
         font_size: 20
         entities:
-          - entity: sensor.pegasusastro_upbv2_switch_value_11
+          - entity: sensor.astrolive_pegasusastro_upbv2_switch_value_11
             color: white
         hours_to_show: 2
         points_per_hour: 60
@@ -102,7 +102,7 @@ cards:
           state: false
         type: custom:mini-graph-card
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_value_14
+        entity: sensor.astrolive_pegasusastro_upbv2_switch_value_14
         secondary_info: state
         tap_action:
           action: none
@@ -118,7 +118,7 @@ cards:
         line_width: 2
         font_size: 20
         entities:
-          - entity: sensor.pegasusastro_upbv2_switch_value_14
+          - entity: sensor.astrolive_pegasusastro_upbv2_switch_value_14
             color: white
         hours_to_show: 2
         points_per_hour: 60
@@ -130,7 +130,7 @@ cards:
           state: false
         type: custom:mini-graph-card
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_value_12
+        entity: sensor.astrolive_pegasusastro_upbv2_switch_value_12
         secondary_info: state
         tap_action:
           action: none
@@ -147,7 +147,7 @@ cards:
         line_width: 2
         font_size: 20
         entities:
-          - entity: sensor.pegasusastro_upbv2_switch_value_12
+          - entity: sensor.astrolive_pegasusastro_upbv2_switch_value_12
             color: white
         hours_to_show: 2
         points_per_hour: 60
@@ -159,7 +159,7 @@ cards:
           state: false
         type: custom:mini-graph-card
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_value_15
+        entity: sensor.astrolive_pegasusastro_upbv2_switch_value_15
         secondary_info: state
         tap_action:
           action: none
@@ -175,7 +175,7 @@ cards:
         line_width: 2
         font_size: 20
         entities:
-          - entity: sensor.pegasusastro_upbv2_switch_value_15
+          - entity: sensor.astrolive_pegasusastro_upbv2_switch_value_15
             color: white
         hours_to_show: 2
         points_per_hour: 60
@@ -191,10 +191,11 @@ cards:
     type: grid
     cards:
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_0
+        entity: switch.astrolive_pegasusastro_upbv2_switch_0
         secondary_info: none
         tap_action:
-          action: none
+          action: toggle
+          confirmation: true
         hold_action:
           action: none
         double_tap_action:
@@ -203,10 +204,11 @@ cards:
         layout: horizontal
         name: QHY 268C (Power)
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_1
+        entity: switch.astrolive_pegasusastro_upbv2_switch_1
         secondary_info: none
         tap_action:
-          action: none
+          action: toggle
+          confirmation: true
         hold_action:
           action: none
         double_tap_action:
@@ -214,10 +216,23 @@ cards:
         layout: horizontal
         name: EQ6-R (Power)
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_2
+        entity: switch.astrolive_pegasusastro_upbv2_switch_2
         secondary_info: none
         tap_action:
+          action: toggle
+          confirmation: true
+        hold_action:
           action: none
+        double_tap_action:
+          action: none
+        layout: horizontal
+        name: GEM45 (Power)
+      - type: custom:mushroom-entity-card
+        entity: switch.astrolive_pegasusastro_upbv2_switch_3
+        secondary_info: none
+        tap_action:
+          action: toggle
+          confirmation: true
         hold_action:
           action: none
         double_tap_action:
@@ -225,21 +240,11 @@ cards:
         layout: horizontal
         name: Flat Mask (Power)
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_3
+        entity: switch.astrolive_pegasusastro_upbv2_switch_4
         secondary_info: none
         tap_action:
-          action: none
-        hold_action:
-          action: none
-        double_tap_action:
-          action: none
-        layout: horizontal
-        name: Out 4 (Power)
-      - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_4
-        secondary_info: none
-        tap_action:
-          action: none
+          action: toggle
+          confirmation: true
         hold_action:
           action: none
         double_tap_action:
@@ -248,10 +253,11 @@ cards:
         layout: horizontal
         name: QHY 268C (USB)
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_5
+        entity: switch.astrolive_pegasusastro_upbv2_switch_5
         secondary_info: none
         tap_action:
-          action: none
+          action: toggle
+          confirmation: true
         hold_action:
           action: none
         double_tap_action:
@@ -259,10 +265,11 @@ cards:
         layout: horizontal
         name: QHY 5III264C (USB)
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_6
+        entity: switch.astrolive_pegasusastro_upbv2_switch_6
         secondary_info: none
         tap_action:
-          action: none
+          action: toggle
+          confirmation: true
         hold_action:
           action: none
         double_tap_action:
@@ -270,36 +277,39 @@ cards:
         layout: horizontal
         name: EQ6-R (USB)
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_7
+        entity: switch.astrolive_pegasusastro_upbv2_switch_7
         secondary_info: none
         tap_action:
-          action: none
+          action: toggle
+          confirmation: true
         hold_action:
           action: none
         double_tap_action:
           action: none
         layout: horizontal
-        name: Polemaster (USB)
+        name: GEM45 (USB)
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_8
+        entity: switch.astrolive_pegasusastro_upbv2_switch_8
         secondary_info: none
         tap_action:
-          action: none
+          action: toggle
+          confirmation: true
         hold_action:
           action: none
         double_tap_action:
           action: none
         fill_container: false
         layout: horizontal
-        name: USB 5
+        name: Lunarnet (USB)
       - type: custom:mushroom-entity-card
-        entity: sensor.pegasusastro_upbv2_switch_9
+        entity: switch.astrolive_pegasusastro_upbv2_switch_9
         secondary_info: none
         tap_action:
-          action: none
+          action: toggle
+          confirmation: true
         hold_action:
           action: none
         double_tap_action:
           action: none
         layout: horizontal
-        name: USB 6
+        name: Polemaster / EFA (USB)

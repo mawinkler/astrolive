@@ -13,6 +13,7 @@ AstroLive uses the nice ALPACA client implementation of the [OCA Box](https://gi
 ## Table of Content<!-- omit in toc -->
 
 - [How It Works](#how-it-works)
+- [Breaking Changes when upgrading from Version 0.3](#breaking-changes-when-upgrading-from-version-03)
 - [Requirements](#requirements)
 - [My Personal Setup](#my-personal-setup)
 - [Usage](#usage)
@@ -20,7 +21,10 @@ AstroLive uses the nice ALPACA client implementation of the [OCA Box](https://gi
   - [Get and Configure AstroLive](#get-and-configure-astrolive)
   - [Run](#run)
 - [Integrate with Home Assistant](#integrate-with-home-assistant)
-  - [Devices and Sensors](#devices-and-sensors)
+  - [Devices and Sensors, Binary Sensors, Switches and Cameras](#devices-and-sensors-binary-sensors-switches-and-cameras)
+    - [Sensors](#sensors)
+    - [Binary Sensors](#binary-sensors)
+    - [Switches](#switches)
   - [Sending Commands](#sending-commands)
     - [Input Texts](#input-texts)
     - [Scripts](#scripts)
@@ -29,7 +33,7 @@ AstroLive uses the nice ALPACA client implementation of the [OCA Box](https://gi
 ## How It Works
 
 - AstroLive connects via the ASCOM Alpaca API to your observatory.
-- For each configured and connected component a MQTT device configuration for sensors and if applicable camera is created below `homeassistant/sensor/astrolive/` and `homeassistant/camera/astrolive/` respectively.
+- For each configured and connected component a MQTT device configuration for sensors, binary_sensors, switches and if applicable camera is created below `homeassistant/`.
 - As of now the following components are supported:
   - Telescope
   - Camera
@@ -41,12 +45,20 @@ AstroLive uses the nice ALPACA client implementation of the [OCA Box](https://gi
   - Rotator
   - SafetyMonitor
 - These configurations allow MQTT auto discovery in Home Assistant.
-- AstroLive then starts a seperate thread which queries the compenent status interval based according to the configuration and publishes the device state to MQTT.
+- AstroLive then starts a seperate thread for each device which queries the compenent status interval according to the configuration and publishes the device state to MQTT.
 - If the component is of the type Camera the last captured FITS image is autostretched, downsized and published as a .jpg. This is the same for Camera via file where AstroLive watches a directory for new FITS images.
 
-Slewing the telescope using the equatorial coordinate system, moving the focuser and some more commands are possible directly from Home Assistant.
+Slewing the telescope using the equatorial coordinate system, parking and unparking the scope, moving the focuser and some more commands are possible directly from Home Assistant.
 
 AstroLive is designed to run as a container to be deployed on a dedicated host or next to Home Assistant. It does ***not*** require any custom integration for Home Assistant since communication is solely via MQTT.
+
+## Breaking Changes when upgrading from Version 0.3
+
+With version 0.3 AstroLive did only use Home Assistant sensors and camera entities. This simplified the initial implementations but using a sensor might not always be the appropriate entity type. An on/off switch in the Pegasus UPB2 should either be represented as a binary_sensor or even better as an actual switch.
+
+For this reason some of the entities in your Home Assistant will automatically change from sensor to switch or binary_sensor when using AstroLive 0.4+. This likely results in missing entities in your Lovelace configuration or automations which should easily be fixed by changing the type there as well.
+
+See chapter [Devices and Sensors, Binary Sensors, Switches and Cameras](#devices-and-sensors-binary-sensors-switches-and-cameras) for details.
 
 ## Requirements
 
@@ -62,25 +74,17 @@ AstroLive is designed to run as a container to be deployed on a dedicated host o
 To give you an idea how I did setup my observatory together with AstroLive and [AstroWeather](https://github.com/mawinkler/astroweather) here's my setup:
 
 - Hardware
-  - Telescope: Skywatcher Esprit 120ED
-  - Mount: Skywatcher EQ6-R
+  - Telescopes: Skywatcher Esprit 120ED, William Optics AP 71
+  - Mounts: Skywatcher EQ6-R, iOptron GEM45
   - Camera: QHY268c
   - Guide Camera: QHY5III462c
   - Off Axis Guider: OAG-M
   - Filter Wheel: QHY CFW3M-US
   - Switch: PegasusAstro Ultimate Powerbox v2
-  - Focuser: PegasusAstro Focus Cube
-  - Mini PC: MeLE Quieter2 8GB 256GB Windows 10 Pro
+  - Focuser: PegasusAstro Focus Cube, ZWO EAF
+  - Mini PC: MeLE Quieter2 8GB 256GB Windows 11
 - Software:
-  - NINA 2.0.0.9001
-  - PHD2 2.6.11
-  - ASCOM Platform 66
-  - EQASCOM V200w
-  - QHYCCD Win AllInOne 21.10.23.19
-  - IOTLink 2.2.2
-  - Polemaster 3.2.8
-  - PegasusAstro Unity Platform 1.5.84.12
-  - Dropbox
+  - NINA, PHD2, ASCOM Platform, EQASCOM, QHYCCD Win AllInOne, Polemaster, iPolar, PegasusAstro Unity, Dropbox
 
 ![alt text](images/scope.jpeg "Scope")
 
@@ -383,37 +387,55 @@ services:
 
 Effectively, there is no configuration required if you just want to monitor your observatory. Simply creating your Lovelace UI using the generated sensors and camera(s) would do the trick.
 
-### Devices and Sensors
+### Devices and Sensors, Binary Sensors, Switches and Cameras
 
 The following devices with the sensors attached are created in Home Assistant based on the example `default.cfg.yaml` from above:
 
-Telescope | Camera | Switch | Focuser | FilterWheel | Dome | Rotator | SafetyMonitor
---------- | ------ | ------ | ------- | ----------- | ---- | ------- | -------------
-At home | Image Type | Max switch | Position | Position | Altitude | Mechanical position | Is safe
-At park | Exposure Duration | Switch 0 | Is moving | Names | At home | Position
-Altitude | Time of observation | Switch 1 | | Current | At park
-Azimuth | X axis binning | Switch ... | | | Azimuth
-Declination | Y axis binning | | | | Shutter status
-Declination rate | Gain
-Guiderate declination | Offset
-Right ascension | Pixel X axis size
-Right ascension rate | Pixel Y axis size
-Guiderate right ascension | Imaging instrument
-Side of pier | CCD temperature
-Site elevation | Filter
-Site Latitude | Sensor readout mode
-Site Longitude | Sensor Bayer pattern
-Slewing | Telescope
-|| Focal length
-|| RA of telescope
-|| Declination of telescope
-|| Altitude of telescope
-|| Azimuth of telescope
-|| Object of interest
-|| RA of imaged object
-|| Declination of imaged object
-|| Rotation of imaged object
-|| Software
+#### Sensors
+
+Telescope | Camera | Camera File | Switch | Focuser | FilterWheel | Dome | Rotator | SafetyMonitor
+--------- | ------ | ----------- | ------ | ------- | ----------- | ---- | ------- | -------------
+Altitude | Camera state | Image Type | Max switch | Position | Position | Altitude | Mechanical position | 
+Azimuth | CCD temperature | Exposure Duration | Switch Value 0 | | Names | Azimuth | Position
+Declination | Cooler Power | Time of observation | Switch Value 1 | | Current | 
+Declination rate | Image array | X axis binning | Switch Value ... | | | 
+Guiderate declination | Last exposure duration | Y axis binning | | | | 
+Right ascension | Last exposure start time | Gain
+Right ascension rate | Percent completed | Offset
+Guiderate right ascension | Readout mode | Pixel X axis size
+Side of pier | Readout modes | Pixel Y axis size
+Site elevation | Sensor type | Imaging instrument
+Site Latitude || CCD temperature
+Site Longitude || Filter
+||| Sensor readout mode
+||| Sensor Bayer pattern
+||| Telescope
+||| Focal length
+||| RA of telescope
+||| Declination of telescope
+||| Altitude of telescope
+||| Azimuth of telescope
+||| Object of interest
+||| RA of imaged object
+||| Declination of imaged object
+||| Rotation of imaged object
+||| Software
+
+#### Binary Sensors
+
+Telescope | Camera | Camera File | Switch | Focuser | FilterWheel | Dome | Rotator | SafetyMonitor
+--------- | ------ | ----------- | ------ | ------- | ----------- | ---- | ------- | -------------
+At home | Cooler On | | | Is moving | | At home | | Is safe
+At park | Image Ready | | | | | At park
+Slewing | | | | | | Shutter status
+
+#### Switches
+
+Telescope | Camera | Camera File | Switch | Focuser | FilterWheel | Dome | Rotator | SafetyMonitor
+--------- | ------ | ----------- | ------ | ------- | ----------- | ---- | ------- | -------------
+| | | | Switch 0
+| | | | Switch 1
+| | | | Switch ...
 
 My personal Lovelace configuration from the screenshot above using `mushroom-entity-card`, `button-card`, `grid` and `picture-entity`:
 
@@ -535,24 +557,6 @@ mode: single
 
 </details>
 
-Turning on or off a port on the switch.
-
-<details><summary><b>Show YAML</b></summary>
-
-```yaml
-alias: AstroLive - Send Command Switch On/Off
-sequence:
-  - service: mqtt.publish
-    data:
-      topic: astrolive/command
-      payload_template: >
-        {{ '{{ "component": "{}", "command": "{}", "id": "{}" }}'.format(
-        component | trim, command | trim, id | trim ) }}
-mode: single
-```
-
-</details>
-
 Changing a filter.
 
 <details><summary><b>Show YAML</b></summary>
@@ -575,4 +579,9 @@ mode: single
 
 Using `button-card`, `entities` and the `mushroom-entity-card` cards.
 
+- [Telescope](config/esprit120ed.yaml)
+- [Filterwheel](config/filterwheel.yaml)
+- [Focuser](config/focuser.yaml)
+- [Powerbox](config/powerbox.yaml)
+- [Camera](config/qhy268c.yaml)
 - [Scope Control](config/scope-control.yaml)

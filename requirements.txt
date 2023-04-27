@@ -1,9 +1,12 @@
-aiohttp==3.8.1
-astropy==5.1
-numpy==1.22.4
-opencv-python-headless==4.6.0.66
+# astropy==5.1
+# numpy==1.22.4
+astropy==5.2.2
+numpy==1.24.2
+opencv-python-headless==4.7.0.72
 paho_mqtt==1.6.1
-pandas==1.4.3
+# pandas==1.4.3
+pandas==2.0.0
 PyYAML==6.0
-requests==2.22.0
-tabulate==0.8.10
+requests==2.29.0
+# tabulate==0.8.10
+tabulate==0.9.0

@@ -1,3 +1,12 @@
+# [0.4](https://github.com/mawinkler/astrolive/compare/v0.3...v0.4) (2023-05-28)
+
+### Features
+
+- Upgraaded dependencies
+- Finally got config entries retained
+- Code cleanup
+- Fix for Home Assisdtant 2023.5 (unit of measurement)
+
 # [0.3](https://github.com/mawinkler/astrolive/compare/v0.2...v0.3) (2023-02-27)
 
 ### Features

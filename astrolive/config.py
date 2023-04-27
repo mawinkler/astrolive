@@ -1,3 +1,4 @@
+"""Parses the configuration file and create a configuration object"""
 import logging
 import os.path
 from os import PathLike
@@ -9,6 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class Config:
+    """Config class"""
+    
     _singleton = None
     default_files = [
         os.path.join(os.path.dirname(__file__), "default.cfg.yaml"),
@@ -48,9 +51,7 @@ class Config:
         return cls._singleton
 
     @classmethod
-    def global_instance_from_files(
-        cls, source: Optional[Iterable[Union[str, PathLike]]] = None
-    ) -> None:
+    def global_instance_from_files(cls, source: Optional[Iterable[Union[str, PathLike]]] = None) -> None:
         """Sets the global configuration singleton object.
 
         Args:
@@ -92,19 +93,19 @@ class Config:
         config = {}
         for src in source:
             try:
-                with open(src) as fd:
+                with open(src) as yaml_config:
                     logger.info("Loading configuration from: %s", src)
-                    y = yaml.safe_load(fd)
-                    config.update(y)
+                    config_list = yaml.safe_load(yaml_config)
+                    config.update(config_list)
             except IOError:
                 logger.info("Non existing config file: %s", src)
         # expand includes
-        for k in config.keys():
-            self.expand_includes(config, k)
+        for config_keys in config.keys():
+            self.expand_includes(config, config_keys)
         self.data = config
 
     @classmethod
-    def expand_includes(cls, d: dir, key: str) -> None:
+    def expand_includes(cls, config_dict: dir, key: str) -> None:
         """Recursively dives into the configuration for includes.
 
         Args:
@@ -117,11 +118,11 @@ class Config:
         """
 
         try:
-            incs = d[key].pop("include")
+            incs = config_dict[key].pop("include")
         except KeyError:
             return
         if isinstance(incs, str):
             incs = [incs]
         for i in incs:
-            cls.expand_includes(d, i)
-            d[key].update(d[i])
+            cls.expand_includes(config_dict, i)
+            config_dict[key].update(config_dict[i])

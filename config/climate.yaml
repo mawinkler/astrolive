@@ -1,0 +1,154 @@
+type: vertical-stack
+cards:
+  - color: rgb(51, 53, 58)
+    color_type: label-card
+    name: Climate
+    styles:
+      card:
+        - height: 20px
+      name:
+        - font-weight: bold
+        - font-size: 14px
+        - color: white
+        - align-self: middle
+        - padding-bottom: 4px
+    type: custom:button-card
+  - square: false
+    columns: 2
+    type: grid
+    cards:
+      - color: rgb(51, 53, 58)
+        color_type: label-card
+        name: Scope
+        styles:
+          card:
+            - height: 20px
+          name:
+            - font-weight: bold
+            - font-size: 14px
+            - color: white
+            - align-self: middle
+            - padding-bottom: 4px
+        type: custom:button-card
+      - color: rgb(51, 53, 58)
+        color_type: label-card
+        name: Mount
+        styles:
+          card:
+            - height: 20px
+          name:
+            - font-weight: bold
+            - font-size: 14px
+            - color: white
+            - align-self: middle
+            - padding-bottom: 4px
+        type: custom:button-card
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 50
+        entities:
+          - entity: sensor.telescope_esprit_120ed_temperature
+            color: white
+        hours_to_show: 168
+        name: Temperature
+        points_per_hour: 6
+        show:
+          name: true
+          icon: false
+          extrema: false
+          labels: true
+        type: custom:mini-graph-card
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 50
+        entities:
+          - entity: sensor.telescope_mount_temperature
+            color: white
+        hours_to_show: 168
+        name: Temperature
+        points_per_hour: 6
+        show:
+          name: true
+          icon: false
+          extrema: false
+          labels: true
+        type: custom:mini-graph-card
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 50
+        entities:
+          - entity: sensor.telescope_esprit_120ed_humidity
+            color: grey
+        hours_to_show: 168
+        name: Humidity Rel
+        points_per_hour: 6
+        show:
+          name: true
+          icon: false
+          extrema: false
+          labels: true
+        type: custom:mini-graph-card
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 50
+        entities:
+          - entity: sensor.telescope_mount_humidity
+            color: grey
+        hours_to_show: 168
+        name: Humidity Rel
+        points_per_hour: 6
+        show:
+          name: true
+          icon: false
+          extrema: false
+          labels: true
+        type: custom:mini-graph-card
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 50
+        entities:
+          - entity: >-
+              sensor.thermal_comfort_telescope_esprit_120ed_absolute_humidity
+            color: white
+        hours_to_show: 48
+        name: Humidity Abs
+        points_per_hour: 6
+        show:
+          name: true
+          icon: false
+          extrema: false
+          labels: true
+        type: custom:mini-graph-card
+      - align_state: center
+        animate: false
+        line_width: 2
+        font_size: 50
+        entities:
+          - entity: sensor.thermal_comfort_telescope_mount_absolute_humidity
+            color: white
+        hours_to_show: 48
+        name: Humidity Abs
+        points_per_hour: 6
+        show:
+          name: true
+          icon: false
+          extrema: false
+          labels: true
+        type: custom:mini-graph-card
+      - type: custom:mushroom-entity-card
+        entity: sensor.thermal_comfort_telescope_esprit_120ed_dew_point
+        name: Dew Point
+      - type: custom:mushroom-entity-card
+        entity: sensor.thermal_comfort_telescope_mount_dew_point
+        name: Dew Point
+      - type: custom:mushroom-entity-card
+        entity: sensor.thermal_comfort_telescope_esprit_120ed_frost_point
+        name: Frost Point
+      - type: custom:mushroom-entity-card
+        entity: sensor.thermal_comfort_telescope_mount_frost_point
+        name: Frost Point

@@ -185,3 +185,4 @@ build_and_push.sh
 publish.sh
 astrolive/default.cfg.yaml
 archive
+make-keys.sh

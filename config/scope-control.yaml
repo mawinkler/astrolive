@@ -1,3 +1,4 @@
+type: vertical-stack
 cards:
   - color: rgb(51, 53, 58)
     color_type: label-card
@@ -68,6 +69,7 @@ cards:
                 + float(states('input_text.astrolive_target_dec_m')) / 60)
                 + float(states('input_text.astrolive_target_dec_s')) / 3600 }}
           target: {}
+          confirmation: true
         name: Slew
         secondary_info: none
         fill_container: true
@@ -80,6 +82,7 @@ cards:
             component: obs.telescope
             command: park
           target: {}
+          confirmation: true
         name: Park
         secondary_info: none
         fill_container: true
@@ -92,7 +95,7 @@ cards:
             component: obs.telescope
             command: unpark
           target: {}
+          confirmation: true
         name: Unpark
         secondary_info: none
         fill_container: true
-type: vertical-stack
