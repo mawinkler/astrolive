@@ -28,7 +28,6 @@ AstroLive uses the nice ALPACA client implementation of the [OCA Box](https://gi
   - [Sending Commands](#sending-commands)
     - [Input Texts](#input-texts)
     - [Scripts](#scripts)
-    - [Lovelace UI](#lovelace-ui)
 
 ## How It Works
 
@@ -437,13 +436,14 @@ Telescope | Camera | Camera File | Switch | Focuser | FilterWheel | Dome | Rotat
 | | | | Switch 1
 | | | | Switch ...
 
-My personal Lovelace configuration from the screenshot above using `mushroom-entity-card`, `button-card`, `grid` and `picture-entity`:
+My personal Lovelace configuration using `mushroom-entity-card`, `button-card`, `grid` and `picture-entity`:
 
-- [QHY 268c](config/qhy268c.yaml)
-- [Esprit 120ED](config/esprit120ed.yaml)
+- [Telescope](config/esprit120ed.yaml)
+- [Filterwheel](config/filterwheel.yaml)
 - [Focuser](config/focuser.yaml)
 - [Powerbox](config/powerbox.yaml)
-- [FilterWheel](config/filterwheel.yaml)
+- [Camera](config/qhy268c.yaml)
+- [Scope Control](config/scope-control.yaml)
 
 ### Sending Commands
 
@@ -574,14 +574,3 @@ mode: single
 ```
 
 </details>
-
-#### Lovelace UI
-
-Using `button-card`, `entities` and the `mushroom-entity-card` cards.
-
-- [Telescope](config/esprit120ed.yaml)
-- [Filterwheel](config/filterwheel.yaml)
-- [Focuser](config/focuser.yaml)
-- [Powerbox](config/powerbox.yaml)
-- [Camera](config/qhy268c.yaml)
-- [Scope Control](config/scope-control.yaml)
