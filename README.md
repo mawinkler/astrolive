@@ -83,7 +83,7 @@ To give you an idea how I did setup my observatory together with AstroLive and [
   - Focuser: PegasusAstro Focus Cube, ZWO EAF
   - Mini PC: MeLE Quieter2 8GB 256GB Windows 11
 - Software:
-  - NINA, PHD2, ASCOM Platform, EQASCOM, QHYCCD Win AllInOne, Polemaster, iPolar, PegasusAstro Unity, Dropbox
+  - NINA, PHD2, ASCOM Platform, EQASCOM, QHYCCD Win AllInOne, Polemaster, iPolar, PegasusAstro Unity, Dropbox, HASS.Agent, Libre Hardware Monitor
 
 ![alt text](images/scope.jpeg "Scope")
 
