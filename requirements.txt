@@ -2,7 +2,7 @@
 # numpy==1.22.4
 astropy==5.2.2
 numpy==1.24.2
-opencv-python-headless==4.7.0.72
+opencv-python-headless==4.8.1.78.72
 paho_mqtt==1.6.1
 # pandas==1.4.3
 pandas==2.0.0
