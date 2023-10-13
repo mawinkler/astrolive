@@ -1,6 +1,6 @@
 """Constant Definitions for AstroLive."""
 
-MANUFACTURER = "AstroLive 0.4"
+MANUFACTURER = "AstroLive 0.5"
 API_ENDPOINT = "http://localhost:11111/api/v1"
 CLIENT_ID = 1
 
@@ -325,7 +325,7 @@ FUNCTIONS = {
             UNIT_OF_MEASUREMENT_NONE,
             DEVICE_TYPE_CAMERA_FILE_ICON,
             DEVICE_CLASS_TIMESTAMP,
-            STATE_CLASS_MEASUREMENT,
+            STATE_CLASS_NONE,
         ],
         [
             TYPE_SENSOR,
@@ -364,16 +364,16 @@ FUNCTIONS = {
             "Pixel X axis size",  # XPIXSZ
             UNIT_OF_MEASUREMENT_MICROMETER,
             DEVICE_TYPE_CAMERA_FILE_ICON,
-            DEVICE_CLASS_DISTANCE,
-            STATE_CLASS_MEASUREMENT,
+            DEVICE_CLASS_NONE,
+            STATE_CLASS_NONE,
         ],
         [
             TYPE_SENSOR,
             "Pixel Y axis size",  # YPIXSZ
             UNIT_OF_MEASUREMENT_MICROMETER,
             DEVICE_TYPE_CAMERA_FILE_ICON,
-            DEVICE_CLASS_DISTANCE,
-            STATE_CLASS_MEASUREMENT,
+            DEVICE_CLASS_NONE,
+            STATE_CLASS_NONE,
         ],
         [
             TYPE_SENSOR,

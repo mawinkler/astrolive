@@ -1,3 +1,10 @@
+# [0.5](https://github.com/mawinkler/astrolive/compare/v0.4...v0.5) ()
+
+### Features
+
+- Adhere to Home Assistant 2023.9 device and entity naming conventions.
+- Fixed object coordinates in camera file. Thanks to @zdesignstudio.
+
 # [0.4](https://github.com/mawinkler/astrolive/compare/v0.3...v0.4) (2023-05-28)
 
 ### Features

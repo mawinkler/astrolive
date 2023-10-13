@@ -11,6 +11,7 @@ from typing import Callable, Iterable, Tuple
 
 import cv2
 import numpy as np
+from astropy import units as u
 from astropy.io import fits
 from astropy.visualization import (
     AsinhStretch,
@@ -22,6 +23,8 @@ from astropy.visualization import (
     SinhStretch,
     SqrtStretch,
 )
+from astropy.coordinates import SkyCoord # High-level coordinates
+from astropy.coordinates import Angle # Angles
 from cv2 import imencode
 
 from .const import (
@@ -146,7 +149,7 @@ class MqttConnector(Connector):
                 + "/"
             )
             config = {
-                "name": device_friendly_name_cap + " " + device_function_cap,
+                "name": device_function_cap,
                 "state_topic": "astrolive/" + device_type + "/" + sys_id_ + "/state",
                 "state_class": function[SENSOR_STATE_CLASS],
                 "device_class": function[SENSOR_DEVICE_CLASS],
@@ -160,7 +163,7 @@ class MqttConnector(Connector):
                 "value_template": "{{ value_json." + device_function_low + " }}",
                 "device": {
                     "identifiers": [sys_id],
-                    "name": device_friendly_name_cap,
+                    "name": "AstroLive " + device_friendly_name_cap,
                     "model": device_friendly_name_cap,
                     "manufacturer": MANUFACTURER,
                 },
@@ -196,7 +199,7 @@ class MqttConnector(Connector):
                 "unique_id": device_type + "_" + device_friendly_name_low + "_" + sys_id_,
                 "device": {
                     "identifiers": [sys_id],
-                    "name": device_friendly_name_cap,
+                    "name": "AstroLive " + device_friendly_name_cap,
                     "model": device_friendly_name_cap,
                     "manufacturer": MANUFACTURER,
                 },
@@ -630,6 +633,10 @@ class CameraFile(MqttConnector):
                 )
                 return
 
+            objctra_fits = hdul[0].header['OBJCTRA']
+            objctdec_fits = hdul[0].header['OBJCTDEC']
+            objct_coords = SkyCoord(objctra_fits, objctdec_fits, unit=(u.hour, u.deg))
+
             topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
             try:
                 await self._publisher.publish_mqtt(topic + "lwt", "ON")
@@ -657,8 +664,8 @@ class CameraFile(MqttConnector):
                     "altitude_of_telescope": round(hdr.get("CENTALT", 0), 3),
                     "azimuth_of_telescope": round(hdr.get("CENTAZ", 0), 3),
                     "object_of_interest": hdr.get("OBJECT", "n/a"),
-                    "ra_of_imaged_object": round(hdr.get("OBJCTRA", 0), 3),
-                    "declination_of_imaged_object": round(hdr.get("OBJCTDEC", 0), 3),
+                    "ra_of_imaged_object": objct_coords.ra.degree,
+                    "declination_of_imaged_object": objct_coords.dec.degree,
                     "rotation_of_imaged_object": round(hdr.get("OBJCTROT", 0), 3),
                     "software": hdr.get("SWCREATE", "n/a"),
                 }
