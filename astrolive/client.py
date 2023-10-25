@@ -35,7 +35,7 @@ from .const import (
 from .errors import AlpacaError, DeviceResponseError, RequestConnectionError
 from .mqttdevices import Connector as MqttConnector
 from .mqtthandler import Connector as MqttHandler
-from .observatory import CameraFile, Observatory
+from .observatory import CameraFile, Switch, Observatory
 
 _LOGGER = logging.getLogger(__name__)
 logging.basicConfig(
@@ -328,6 +328,11 @@ class AstroLive:
                     DeviceResponseError,
                 ):  # connection to telescope failed
                     pass
+            if isinstance(child, Switch):
+                max_switch = child.component_options.get("max_switch", 0)
+                if max_switch == 0:
+                    max_switch = self.obs.telescope.switch.maxswitch()
+                children[child.sys_id]["max_switch"] = max_switch
             children[child.sys_id]["comment"] = child.component_options.get("comment", "")
             children[child.sys_id]["friendly_name"] = child.component_options.get("friendly_name", "")
             children[child.sys_id]["monitor"] = child.component_options.get("monitor", "")
@@ -369,8 +374,8 @@ class AstroLive:
 
                             # If device is of type switch enumerate the ports
                             if device_type == DEVICE_TYPE_SWITCH:
-                                max_switch = self.obs.telescope.switch.maxswitch()
-                                _LOGGER.debug(
+                                max_switch = children[child].get("max_switch")
+                                _LOGGER.info(
                                     "Verifying %s has %d switches",
                                     children[child].get("friendly_name"),
                                     max_switch,
@@ -384,7 +389,8 @@ class AstroLive:
                                             DEVICE_TYPE_SWITCH_ICON,
                                             DEVICE_CLASS_SWITCH,
                                             STATE_CLASS_NONE,
-                                        ])
+                                        ]
+                                    )
                                     device_functions.append(
                                         [
                                             TYPE_SENSOR,
@@ -393,7 +399,8 @@ class AstroLive:
                                             DEVICE_TYPE_SWITCH_ICON,
                                             DEVICE_CLASS_NONE,
                                             STATE_CLASS_NONE,
-                                        ])
+                                        ]
+                                    )
 
                             # Create entity configuration in mqtt
                             await mqtt_connector.create_mqtt_config(

@@ -91,7 +91,11 @@ backyard:
             kind: switch
             friendly_name: <NAME OF YOUR SWITCH>
             update_interval: 30
-
+            # Optionally define the number of available switches.
+            # If not set astrolive will query the switch which is NOT
+            # supported with all ASCOM drivers.
+            # max_switch: 8
+            
           filterwheel:
             kind: filterwheel
             friendly_name: <NAME OF YOUR FILTERWHEEL>
