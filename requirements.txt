@@ -1,13 +1,8 @@
-# astropy==5.1
-# numpy==1.22.4
-astropy==5.2.2
-numpy==1.24.2
-#opencv-python-headless==4.7.0.72
-opencv-python-headless==4.8.1.78
+astropy==6.0.0
+numpy==1.26.4
 paho_mqtt==1.6.1
-# pandas==1.4.3
-pandas==2.0.0
-PyYAML==6.0
-requests==2.29.0
-# tabulate==0.8.10
+pandas==2.2.0
+PyYAML==6.0.1
+Requests==2.31.0
 tabulate==0.9.0
+opencv-python-headless==4.9.0.80
