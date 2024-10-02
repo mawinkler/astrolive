@@ -1,4 +1,4 @@
-FROM python:3.12.1-slim-bullseye AS compile-image
+FROM python:3.8.20-slim-bullseye AS compile-image
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ ADD requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt --user && \
     pip list
 
-FROM python:3.12.1-slim-bullseye AS runtime-image
+FROM python:3.8.20-slim-bullseye AS runtime-image
 
 COPY --from=compile-image /root/.local /root/.local
 COPY --from=compile-image /etc/ssl /etc/ssl
