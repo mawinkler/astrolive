@@ -866,7 +866,7 @@ class FilterWheel(MqttConnector):
         _LOGGER.debug("%s: Update", sys_id)
         topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
         try:
-            if device.connected():
+            if device.connected() and len(device.names()) > 0:
                 await self._publisher.publish_mqtt(topic + "lwt", "ON")
                 state = {
                     "position": device.position(),

@@ -35,15 +35,22 @@ class Connector:
 
         _LOGGER.debug("%s", buf)
 
-    def on_connect(self, client, userdata, flags, rc):
+    def on_connect(self, client, userdata, flags, rc, properties):
         """Connected to MQTT"""
 
-        client.publish(
-            "astrolive/lwt",
-            "ON",
-        )
+        if flags.get("session_present"):
+            _LOGGER.debug("MQTT session present")
 
-    def on_disconnect(self, client, userdata, flags, rc):
+        if rc == 0:
+            _LOGGER.debug("MQTT success connect")
+            client.publish(
+                "astrolive/lwt",
+                "ON",
+            )
+        else:
+            _LOGGER.debug("MQTT success not successful")
+
+    def on_disconnect(self, client, userdata, flags, rc, properties):
         """Disconnecting from MQTT"""
 
         client.publish(
@@ -81,8 +88,8 @@ class MqttHandler(Connector):
         self._client = None
         unique_id = "".join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(12))
         if self._publisher is None:
-            proto = mqtt.MQTTv311
-            self._client = mqtt.Client(f"{options['mqtt']['client']}-{unique_id}", proto)
+            proto = mqtt.MQTTv5
+            self._client = mqtt.Client(client_id=f"{options['mqtt']['client']}-{unique_id}", protocol=proto)
             self._client.on_message = self.on_message
             self._client.on_log = self.on_log
             self._client.on_connect = self.on_connect

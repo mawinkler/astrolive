@@ -1,4 +1,15 @@
-# [0.5](https://github.com/mawinkler/astrolive/compare/v0.4...v0.5) ()
+# [0.6](https://github.com/mawinkler/astrolive/compare/v0.5...v0.6) (2024-11-17)
+
+### Changes
+
+- Bump dependencies to current versions
+- Added support for MQTTv5
+
+### Fixes
+
+- Fixed an uncached error that occurred when the filter wheel is inaccessible.
+
+# [0.5](https://github.com/mawinkler/astrolive/compare/v0.4...v0.5) (2023-10-13)
 
 ### Features
 
