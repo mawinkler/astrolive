@@ -1,54 +1,43 @@
 """Handler for MQTT communication"""
+
 import glob
 import json
 import logging
 import os
-import time
 import sys
+import time
 from datetime import datetime, timezone
 from time import sleep
 from typing import Callable, Iterable, Tuple
 
 import cv2
-import numpy as np
 from astropy import units as u
+from astropy.coordinates import SkyCoord  # High-level coordinates
 from astropy.io import fits
-from astropy.visualization import (
-    AsinhStretch,
-    AsymmetricPercentileInterval,
-    LinearStretch,
-    LogStretch,
-    ManualInterval,
-    MinMaxInterval,
-    SinhStretch,
-    SqrtStretch,
-)
-from astropy.coordinates import SkyCoord # High-level coordinates
-from astropy.coordinates import Angle # Angles
 from cv2 import imencode
 
 from .const import (
     CAMERA_SENSOR_TYPES,
     CAMERA_STATES,
+    DEVICE_CLASS_SWITCH,
     DEVICE_TYPE_CAMERA,
     DEVICE_TYPE_CAMERA_FILE,
-    IMAGE_INVERT,
-    IMAGE_MINMAX_PERCENT,
-    IMAGE_MINMAX_VALUE,
-    IMAGE_STRETCH_FUNCTION,
     MANUFACTURER,
-    SENSOR_TYPE,
-    SENSOR_NAME,
-    SENSOR_UNIT,
-    SENSOR_ICON,
     SENSOR_DEVICE_CLASS,
+    SENSOR_ICON,
+    SENSOR_NAME,
     SENSOR_STATE_CLASS,
-    STATE_ON,
+    SENSOR_TYPE,
+    SENSOR_UNIT,
     STATE_OFF,
+    STATE_ON,
+    STRETCH_ALGORITHM,
+    STRETCH_AP_ID,
+    STRETCH_STF_ID,
     TYPE_TEXT,
-    DEVICE_CLASS_SWITCH,
 )
 from .errors import AlpacaError, DeviceResponseError, RequestConnectionError
+from .image import ImageManipulation
 from .observatory import (
     Camera,
     CameraFile,
@@ -63,7 +52,6 @@ from .observatory import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-logging.getLogger("mqtt").setLevel(logging.DEBUG)
 
 
 class Connector:
@@ -208,126 +196,6 @@ class MqttConnector(Connector):
             _LOGGER.debug("Published MQTT Camera Config for a %s", device_type)
 
         return None
-
-    async def normalize_img(
-        self,
-        img_arr,
-        stretch="asinh",
-        minmax_percent=None,
-        minmax_value=None,
-        invert=False,
-    ):
-        """
-        Apply given stretch and scaling to an image array.
-
-        Args:
-            img_arr (array): The input image array.
-            stretch (str):
-                Optional. default 'asinh'. The stretch to apply to the image array.
-                Valid values are: asinh, sinh, sqrt, log, linear
-            minmax_percent (array):
-                Optional. Interval based on a keeping a specified fraction of pixels (can be asymmetric)
-                when scaling the image. The format is [lower percentile, upper percentile], where pixel
-                values below the lower percentile and above the upper percentile are clipped.
-                Only one of minmax_percent and minmax_value shoul be specified.
-            minmax_value (array):
-                Optional. Interval based on user-specified pixel values when scaling the image.
-                The format is [min value, max value], where pixel values below the min value and above
-                the max value are clipped.
-                Only one of minmax_percent and minmax_value should be specified.
-            invert (bool):
-                Optional, default False.  If True the image is inverted (light pixels become dark and vice versa).
-
-        Returns
-        -------
-        response (array):
-            The normalized image array, in the form in an integer arrays with values in the range 0-255.
-        """
-
-        # Setting up the transform with the stretch
-        if stretch == "asinh":
-            transform = AsinhStretch()
-        elif stretch == "sinh":
-            transform = SinhStretch()
-        elif stretch == "sqrt":
-            transform = SqrtStretch()
-        elif stretch == "log":
-            transform = LogStretch()
-        elif stretch == "linear":
-            transform = LinearStretch()
-
-        # transform = LinearStretch(slope=0.5, intercept=0.5) + SinhStretch() + LinearStretch(slope=2, intercept=-1)
-        transform += SinhStretch()
-
-        # Adding the scaling to the transform
-        if minmax_percent is not None:
-            transform += AsymmetricPercentileInterval(*minmax_percent)
-
-            if minmax_value is not None:
-                _LOGGER.error("Both minmax_percent and minmax_value are set, minmax_value will be ignored.")
-        elif minmax_value is not None:
-            transform += ManualInterval(*minmax_value)
-        else:  # Default, scale the entire image range to [0,1]
-            transform += MinMaxInterval()
-
-        # Performing the transform and then putting it into the integer range 0-255
-        norm_img = transform(img_arr)
-        norm_img = np.multiply(256, norm_img, out=norm_img)
-        norm_img = norm_img.astype(np.uint16)
-
-        # Applying invert if requested
-        if invert:
-            norm_img = 256 - norm_img
-
-        return norm_img
-
-    async def image_resize(self, image, width=None, height=None, inter=cv2.INTER_AREA):
-        """Resizes an image while keeping the aspect ratio.
-
-        Args:
-            image (array): The input image array.
-            width (int):
-                Optional. Width of the target image.
-            height (int):
-                Optional. Height of the target image.
-            inter (int):
-                Optional. Interpolation method.
-
-        Returns
-        -------
-        response (array):
-            The resized image.
-        """
-
-        # initialize the dimensions of the image to be resized and
-        # grab the image size
-        dim = None
-        (image_height, image_width) = image.shape[:2]
-
-        # if both the width and height are None, then return the
-        # original image
-        if width is None and height is None:
-            return image
-
-        # check to see if the width is None
-        if width is None:
-            # calculate the ratio of the height and construct the
-            # dimensions
-            ratio = height / float(image_height)
-            dim = (int(image_width * ratio), height)
-
-        # otherwise, the height is None
-        else:
-            # calculate the ratio of the width and construct the
-            # dimensions
-            ratio = width / float(image_width)
-            dim = (width, int(image_height * ratio))
-
-        # resize the image
-        resized = cv2.resize(image, dim, interpolation=inter)
-
-        # return the resized image
-        return resized
 
 
 class Telescope(MqttConnector):
@@ -485,25 +353,29 @@ class Camera(MqttConnector):
                         _LOGGER.info("%s: Reading image", sys_id)
                         image_data = device.imagearray()
 
-                        _LOGGER.debug("%s: Normalizing image", sys_id)
-                        normalized = await self.normalize_img(
-                            image_data,
-                            IMAGE_STRETCH_FUNCTION,
-                            IMAGE_MINMAX_PERCENT,
-                            IMAGE_MINMAX_VALUE,
-                            IMAGE_INVERT,
-                        )
-                        _LOGGER.debug("%s: Image dimensions " + str(normalized.shape), sys_id)
+                        _LOGGER.debug("%s: Normalize image", sys_id)
+                        image_data = await ImageManipulation.normalize_image(image_data)
+
+                        _LOGGER.debug("%s: Stretch image", sys_id)
+                        if STRETCH_ALGORITHM == STRETCH_STF_ID:
+                            _LOGGER.debug("%s: STF Stretch image", sys_id)
+                            image_data = await ImageManipulation.compute_stf_stretch(image_data)
+                        if STRETCH_ALGORITHM == STRETCH_AP_ID:
+                            _LOGGER.debug("%s: AP Stretch image", sys_id)
+                            image_data = await ImageManipulation.compute_astropy_stretch(image_data)
+
+                        _LOGGER.debug("%s: Image dimensions " + str(image_data.shape), sys_id)
 
                         _LOGGER.debug("%s: Scaling image", sys_id)
-                        normalized = await self.image_resize(normalized, width=1024)
+                        image_data = await ImageManipulation.resize_image(image_data)
 
                         _LOGGER.debug("%s: Encoding image", sys_id)
-                        normalized_jpg = imencode(".jpg", normalized)[1]
+                        image_data = imencode(".png", image_data)[1]
 
                         _LOGGER.info("%s: Publish image", sys_id)
-                        image_bytearray = bytearray(normalized_jpg)
-                        _LOGGER.debug("%s: Image size {len(image_bytearray)} bytes", sys_id)
+                        image_bytearray = bytearray(image_data)
+                        _LOGGER.debug("%s: Image size %s bytes", sys_id, len(image_bytearray))
+
                         await self._publisher.publish_mqtt(topic + "screen", image_bytearray)
                 await self._publisher.publish_mqtt(topic + "state", json.dumps(state))
             else:
@@ -633,8 +505,8 @@ class CameraFile(MqttConnector):
                 )
                 return
 
-            objctra_fits = hdul[0].header['OBJCTRA']
-            objctdec_fits = hdul[0].header['OBJCTDEC']
+            objctra_fits = hdul[0].header.get("OBJCTRA", "n/a")
+            objctdec_fits = hdul[0].header.get("OBJCTDEC", "n/a")
             objct_coords = SkyCoord(objctra_fits, objctdec_fits, unit=(u.hour, u.deg))
 
             topic = "astrolive/" + device_type + "/" + sys_id_ + "/"
@@ -671,25 +543,29 @@ class CameraFile(MqttConnector):
                 }
                 await self._publisher.publish_mqtt(topic + "state", json.dumps(state))
 
-                _LOGGER.debug("%s: Normalizing image", sys_id)
-                normalized = await self.normalize_img(
-                    image_data,
-                    IMAGE_STRETCH_FUNCTION,
-                    IMAGE_MINMAX_PERCENT,
-                    IMAGE_MINMAX_VALUE,
-                    IMAGE_INVERT,
-                )
-                _LOGGER.debug("%s: Image dimensions " + str(normalized.shape), sys_id)
+                _LOGGER.debug("%s: Normalize image", sys_id)
+                image_data = await ImageManipulation.normalize_image(image_data)
+
+                _LOGGER.debug("%s: Stretch image", sys_id)
+                if STRETCH_ALGORITHM == STRETCH_STF_ID:
+                    _LOGGER.debug("%s: STF Stretch image", sys_id)
+                    image_data = await ImageManipulation.compute_stf_stretch(image_data)
+                if STRETCH_ALGORITHM == STRETCH_AP_ID:
+                    _LOGGER.debug("%s: AP Stretch image", sys_id)
+                    image_data = await ImageManipulation.compute_astropy_stretch(image_data)
+
+                _LOGGER.debug("%s: Image dimensions " + str(image_data.shape), sys_id)
 
                 _LOGGER.debug("%s: Scaling image", sys_id)
-                normalized = await self.image_resize(normalized, width=1024)
+                image_data = await ImageManipulation.resize_image(image_data)
 
                 _LOGGER.debug("%s: Encoding image", sys_id)
-                normalized_jpg = imencode(".jpg", normalized)[1]
+                image_data = imencode(".png", image_data)[1]
 
                 _LOGGER.info("%s: Publish image", sys_id)
-                image_bytearray = bytearray(normalized_jpg)
-                _LOGGER.debug("%s: Image size {len(image_bytearray)} bytes", sys_id)
+                image_bytearray = bytearray(image_data)
+                _LOGGER.debug("%s: Image size %s bytes", sys_id, len(image_bytearray))
+
                 await self._publisher.publish_mqtt(topic + "screen", image_bytearray)
             except (RequestConnectionError, DeviceResponseError) as rcedre:
                 await self._publisher.publish_mqtt(topic + "lwt", "OFF")

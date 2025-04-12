@@ -1,4 +1,5 @@
 """Parses the configuration file and create a configuration object"""
+
 import logging
 import os.path
 from os import PathLike
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class Config:
     """Config class"""
-    
+
     _singleton = None
     default_files = [
         os.path.join(os.path.dirname(__file__), "default.cfg.yaml"),

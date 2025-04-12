@@ -1,4 +1,5 @@
 """Handler for MQTT communication"""
+
 import json
 import logging
 import queue
@@ -10,15 +11,13 @@ from typing import Callable, Iterable, Tuple
 
 import paho.mqtt.client as mqtt
 
+from .const import (
+    STATE_OFF,
+    STATE_ON,
+)
 from .observatory import Component
 
-from .const import (
-    STATE_ON,
-    STATE_OFF,
-)
-
 _LOGGER = logging.getLogger(__name__)
-logging.getLogger("mqtt").setLevel(logging.DEBUG)
 
 
 class Connector:
@@ -33,7 +32,7 @@ class Connector:
     def on_log(self, client, userdata, level, buf):
         """MQTT logging"""
 
-        _LOGGER.debug("%s", buf)
+        # _LOGGER.debug("%s", buf)
 
     def on_connect(self, client, userdata, flags, rc, properties):
         """Connected to MQTT"""
@@ -53,10 +52,10 @@ class Connector:
     def on_disconnect(self, client, userdata, flags, rc, properties):
         """Disconnecting from MQTT"""
 
-        client.publish(
-            "astrolive/lwt",
-            "OFF",
-        )
+        # client.publish(
+        #     "astrolive/lwt",
+        #     "OFF",
+        # )
 
     def get(self, component: "Component", variable: str, **data):
         """Not implemented"""
@@ -235,12 +234,12 @@ class MqttHandler(Connector):
                 message = self._messages.get()
                 if message:
                     response = self._client.publish(message[0], message[1], message[2], message[3])
-                    _LOGGER.debug(
-                        "MQTT publish ratain: %s, %s, %s",
-                        message[0],
-                        message[2],
-                        message[3],
-                    )
+                    # _LOGGER.debug(
+                    #     "MQTT publish ratain: %s, %s, %s",
+                    #     message[0],
+                    #     message[2],
+                    #     message[3],
+                    # )
                     if response[0]:
                         _LOGGER.warning("MQTT failure: %s", response[0])
             sleep(0.1)

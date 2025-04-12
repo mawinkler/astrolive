@@ -15,13 +15,31 @@ COLOR_PURPLE = "1;35"
 COLOR_CYAN = "1;36"
 COLOR_STD = "0"
 
-IMAGE_PUBLISH_DIMENSIONS = (1024, 685)
-IMAGE_STRETCH_FUNCTION = "asinh"
-IMAGE_MINMAX_PERCENT = [15, 95]  # [0.5, 95]
-IMAGE_MINMAX_VALUE = None
-IMAGE_INVERT = False
 
+# #########################################################################
+# Image Manipulation
+# #########################################################################
+CAMERA_SAMPLE_RESOLUTION = 16
+IMAGE_PUBLISH_DIMENSIONS = (1920, 1080)
+
+# Select Stretching Algorithm
+# Valid Options: STF, AP
+STRETCH_ALGORITHM = "STF"
+
+# PixInsight STF Stretch
+STRETCH_STF_ID = "STF"
+STRETCH_STF_TARGET_BACKGROUND = 0.25
+STRETCH_STF_CLIPPING_POINT = -2.8
+
+# AstroPy Stretch
+STRETCH_AP_ID = "AP"
+STRETCH_AP_STRETCH_FUNCTION = "asinh"
+STRETCH_AP_MINMAX_PERCENT = [15, 95]  # [0.5, 95]
+STRETCH_AP_MINMAX_VALUE = None
+
+# #########################################################################
 # Devices
+# #########################################################################
 DEVICE_TYPE_OBSERVATORY = "observatory"
 DEVICE_TYPE_TELESCOPE = "telescope"
 DEVICE_TYPE_CAMERA = "camera"
@@ -43,7 +61,9 @@ DEVICE_TYPE_DOME_ICON = "mdi:greenhouse"
 DEVICE_TYPE_ROTATOR_ICON = "mdi:rotate-360"
 DEVICE_TYPE_SAFETYMONITOR_ICON = "mdi:seatbelt"
 
+# #########################################################################
 # Entities
+# #########################################################################
 SENSOR_TYPE = 0
 SENSOR_NAME = 1
 SENSOR_UNIT = 2

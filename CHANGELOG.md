@@ -1,9 +1,19 @@
+# [0.7](https://github.com/mawinkler/astrolive/compare/v0.6...v0.7) (2025-04-12)
+
+I am working on making the reconnects more reliable when the observatory is temporarily unavailable.
+
+In the meantime, AstroLive has now implemented PixInsight's AutoStretch!
+
+### Features
+
+- Implemented PixInsights ScreenTransferFunction Autostretch. Stretching method is configured in `const.py` and not yet configurable in `config.yaml`.
+
 # [0.6](https://github.com/mawinkler/astrolive/compare/v0.5...v0.6) (2024-11-17)
 
 ### Changes
 
-- Bump dependencies to current versions
-- Added support for MQTTv5
+- Bump dependencies to current versions.
+- Added support for MQTTv5.
 
 ### Fixes
 

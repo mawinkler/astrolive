@@ -1,4 +1,5 @@
 """Convert coordinates from string to Angle"""
+
 from astropy import units as u
 from astropy.coordinates import Angle
 

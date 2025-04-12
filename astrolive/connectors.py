@@ -1,4 +1,5 @@
 """Implementation of the Alpaca Connector"""
+
 import logging
 import random
 from typing import Callable, Iterable, Tuple

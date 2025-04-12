@@ -1,6 +1,6 @@
 """Define a client to interact with ASCOM Remote."""
+
 import asyncio
-import json
 import logging
 import sys
 import traceback
@@ -16,37 +16,36 @@ from .config import Config
 from .const import (
     COLOR_BLUE,
     COLOR_GREEN,
-    FUNCTIONS,
+    DEVICE_CLASS_NONE,
+    DEVICE_CLASS_SWITCH,
+    DEVICE_TYPE_FILTERWHEEL,
     DEVICE_TYPE_FOCUSER,
     DEVICE_TYPE_OBSERVATORY,
     DEVICE_TYPE_SWITCH,
-    DEVICE_TYPE_TELESCOPE,
-    DEVICE_TYPE_FILTERWHEEL,
     DEVICE_TYPE_SWITCH_ICON,
-    STATE_ON,
-    STATE_OFF,
-    TYPE_SWITCH,
-    TYPE_SENSOR,
-    UNIT_OF_MEASUREMENT_NONE,
-    DEVICE_CLASS_SWITCH,
-    DEVICE_CLASS_NONE,
+    DEVICE_TYPE_TELESCOPE,
+    FUNCTIONS,
     STATE_CLASS_NONE,
+    STATE_OFF,
+    STATE_ON,
+    TYPE_SENSOR,
+    TYPE_SWITCH,
+    UNIT_OF_MEASUREMENT_NONE,
 )
 from .errors import AlpacaError, DeviceResponseError, RequestConnectionError
 from .mqttdevices import Connector as MqttConnector
 from .mqtthandler import Connector as MqttHandler
-from .observatory import CameraFile, Switch, Observatory
+from .observatory import CameraFile, Observatory, Switch
 
 _LOGGER = logging.getLogger(__name__)
 logging.basicConfig(
     stream=sys.stdout,
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s %(levelname)s (%(threadName)s) [%(funcName)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("mqtt").setLevel(logging.DEBUG)
 
 
 class AstroLive:
